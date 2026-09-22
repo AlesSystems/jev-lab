@@ -47,6 +47,14 @@ class DecisionTests(unittest.TestCase):
             with self.subTest(bad_value=bad_value), self.assertRaises(
                 promise_catcher.ResponseError
             ):
+                    promise_catcher.parse_jev_response(broken)
+
+        for bad_tokens in (True, -1, 1.5, "10"):
+            broken = json.loads(json.dumps(valid))
+            broken["usage"]["input_tokens"] = bad_tokens
+            with self.subTest(bad_tokens=bad_tokens), self.assertRaises(
+                promise_catcher.ResponseError
+            ):
                 promise_catcher.parse_jev_response(broken)
 
 
@@ -132,6 +140,57 @@ class CliTests(unittest.TestCase):
             self.assertEqual(summary["not_run"], 10)
             self.assertEqual(summary["baseline_correct"], 9)
             self.assertEqual(summary["acceptance"], "not_measured")
+
+    def test_live_metrics_require_balanced_heldout_labels_and_price_known_usage(self):
+        fixtures = Path(__file__).with_name("fixtures.jsonl")
+        answer = promise_catcher.JevAnswers(0.9, 0.1, "jev-1.13.0", {"input_tokens": 100})
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
+            os.environ, {"TYPESAFE_API_KEY": "test-key"}
+        ), mock.patch.object(
+            promise_catcher, "call_jev", return_value=answer
+        ):
+            dev = promise_catcher.evaluate(
+                fixtures,
+                Path(directory) / "dev.jsonl",
+                live=True,
+                split="dev",
+            )
+            self.assertEqual(dev["input_tokens_known"], 1_000)
+            self.assertEqual(dev["usage_missing_count"], 0)
+            self.assertEqual(dev["estimated_input_cost_usd"], 0.000042)
+
+            rows = [json.loads(line) for line in fixtures.read_text().splitlines()]
+            for row in rows:
+                if row["split"] == "heldout":
+                    row["expected"] = "proposed"
+            unbalanced = Path(directory) / "unbalanced.jsonl"
+            unbalanced.write_text("".join(json.dumps(row) + "\n" for row in rows))
+            summary = promise_catcher.evaluate(
+                unbalanced,
+                Path(directory) / "heldout.jsonl",
+                live=True,
+                split="heldout",
+            )
+            self.assertFalse(summary["jev_acceptance_evaluable"])
+            self.assertEqual(summary["acceptance"], "not_measured")
+            self.assertEqual(summary["acceptance_reason"], "heldout_labels_not_10_and_10")
+
+    def test_live_metrics_count_empty_usage_as_missing(self):
+        fixtures = Path(__file__).with_name("fixtures.jsonl")
+        answer = promise_catcher.JevAnswers(0.9, 0.1, "jev-1.13.0", {})
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
+            os.environ, {"TYPESAFE_API_KEY": "test-key"}
+        ), mock.patch.object(
+            promise_catcher, "call_jev", return_value=answer
+        ):
+            summary = promise_catcher.evaluate(
+                fixtures,
+                Path(directory) / "dev.jsonl",
+                live=True,
+                split="dev",
+            )
+            self.assertEqual(summary["usage_missing_count"], 10)
+            self.assertEqual(summary["input_tokens_known"], 0)
 
     def test_offline_catch_reports_not_run_and_requires_preview_opt_in(self):
         script = Path(__file__).with_name("promise_catcher.py")
