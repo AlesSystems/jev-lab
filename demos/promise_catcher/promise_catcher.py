@@ -476,7 +476,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(json.dumps(evaluate(args.fixtures, args.evidence, args.live, args.split), sort_keys=True))
         return 0
     except (ValueError, PreviewError, OSError) as exc:
-        print(json.dumps({"status": "error", "error": str(exc)}), file=sys.stderr)
+        error = str(exc) if isinstance(exc, (ValueError, PreviewError)) else _safe_error(exc)
+        print(json.dumps({"status": "error", "error": error}), file=sys.stderr)
         return 2
 
 

@@ -4,6 +4,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from argparse import Namespace
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 from unittest import mock
 
@@ -54,6 +57,7 @@ class PreviewTests(unittest.TestCase):
             item = promise_catcher.PromiseInput("note-17", "Ada", "I will send it.")
             self.assertEqual(promise_catcher.save_preview(path, item), "created")
             self.assertEqual(promise_catcher.save_preview(path, item), "duplicate")
+            self.assertEqual(promise_catcher.save_preview(path, item, "live_jev"), "duplicate")
             self.assertEqual(
                 promise_catcher.save_preview(
                     path,
@@ -168,6 +172,26 @@ class CliTests(unittest.TestCase):
             output = json.loads(result.stdout)
             self.assertEqual(output["jev_action"], "unavailable")
             self.assertEqual(output["preview_status"], "not_requested")
+            self.assertFalse(preview.exists())
+
+    def test_request_failure_never_writes_a_baseline_preview(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
+            os.environ, {"TYPESAFE_API_KEY": "test-key"}
+        ), mock.patch.object(
+            promise_catcher, "call_jev", side_effect=promise_catcher.ResponseError("failed")
+        ):
+            preview = Path(directory) / "previews.jsonl"
+            output = StringIO()
+            args = Namespace(
+                source_id="note-17",
+                author="Ada",
+                sentence="I will send it.",
+                live=True,
+                preview=str(preview),
+            )
+            with redirect_stdout(output):
+                promise_catcher._catch(args)
+            self.assertEqual(json.loads(output.getvalue())["jev_action"], "unavailable")
             self.assertFalse(preview.exists())
 
 
