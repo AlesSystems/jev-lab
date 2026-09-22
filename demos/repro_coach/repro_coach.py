@@ -217,6 +217,7 @@ def metrics(rows: Sequence[Mapping[str, Any]]) -> dict[str, object]:
         "unavailable": unavailable,
         "unavailable_rate": unavailable / eligible if eligible else 0.0,
         "false_empty_checklists": false_empty,
+        "false_empty_checklist_rate": false_empty / eligible if eligible else 0.0,
         "baseline_correct": baseline_correct,
         "baseline_rescues": rescues,
         "baseline_regressions": regressions,
@@ -251,6 +252,7 @@ def run_fixture(fixture: Mapping[str, Any], live: bool, api_key: str | None) -> 
     else:
         jev_decision = Decision("not_run")
         provenance = "baseline_only"
+    attempted = bool(live and fixture["report"].strip() and api_key)
     return {
         "run_at": datetime.now(timezone.utc).isoformat(),
         "fixture_id": fixture["fixture_id"],
@@ -263,11 +265,11 @@ def run_fixture(fixture: Mapping[str, Any], live: bool, api_key: str | None) -> 
         "probabilities": parsed.values if parsed else None,
         "thresholds": {"low": LOW, "high": HIGH},
         "question_sha256": question_hash(),
-        "requested_model": MODEL if live else None,
+        "requested_model": MODEL if attempted else None,
         "returned_model": parsed.returned_model if parsed else None,
         "usage": parsed.usage if parsed else None,
         "usage_missing": bool(live and parsed and parsed.usage is None),
-        "attempts": 1 if live and api_key else 0,
+        "attempts": 1 if attempted else 0,
         "elapsed_ms": elapsed_ms,
         "provenance": provenance,
         "error": error,
