@@ -136,7 +136,7 @@ def parse_response(payload: object) -> ParsedResponse:
         values[key] = _probability(answer.get("noul"))
     model = payload.get("model")
     usage = payload.get("usage")
-    if model is not None and not isinstance(model, str):
+    if not isinstance(model, str) or not model.strip():
         raise ResponseError("invalid_model")
     if usage is not None and not isinstance(usage, dict):
         raise ResponseError("invalid_usage")
@@ -259,10 +259,11 @@ def run_fixture(fixture: Mapping[str, Any], live: bool, api_key: str | None) -> 
     elif live:
         if not api_key:
             error = "missing_api_key"
+            provenance = "unattempted"
         else:
             parsed, error, elapsed_ms = call_jev(fixture["report"], api_key)
+            provenance = "live_jev"
         jev_decision = decide(parsed.values) if parsed else Decision("unavailable", error=error)
-        provenance = "live_jev"
     else:
         jev_decision = Decision("not_run")
         provenance = "baseline_only"
@@ -282,7 +283,7 @@ def run_fixture(fixture: Mapping[str, Any], live: bool, api_key: str | None) -> 
         "requested_model": MODEL if attempted else None,
         "returned_model": parsed.returned_model if parsed else None,
         "usage": parsed.usage if parsed else None,
-        "usage_missing": bool(live and parsed and parsed.usage is None),
+        "usage_missing": bool(attempted and _input_tokens(parsed.usage if parsed else None) is None),
         "attempts": 1 if attempted else 0,
         "elapsed_ms": elapsed_ms,
         "provenance": provenance,
@@ -341,9 +342,12 @@ def report_command(args: argparse.Namespace) -> int:
         print(json.dumps({**asdict(Decision("request_description")), "engine": "local_validation", "provenance": "local_validation", "probabilities": None}))
         return 0
     if args.live:
-        parsed, error, _ = call_jev(report, os.environ.get("TYPESAFE_API_KEY", "")) if os.environ.get("TYPESAFE_API_KEY") else (None, "missing_api_key", 0)
+        api_key = os.environ.get("TYPESAFE_API_KEY")
+        parsed, error, _ = call_jev(report, api_key) if api_key else (None, "missing_api_key", 0)
         result = decide(parsed.values) if parsed else Decision("unavailable", error=error)
-        engine, provenance, probabilities = "jev", "live_jev", parsed.values if parsed else None
+        engine = "jev"
+        provenance = "live_jev" if api_key else "unattempted"
+        probabilities = parsed.values if parsed else None
     else:
         result = baseline(report)
         engine, provenance, probabilities = "baseline", "baseline_only", None
