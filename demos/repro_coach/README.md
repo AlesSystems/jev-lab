@@ -24,6 +24,8 @@ TYPESAFE_API_KEY=... python3 demos/repro_coach/repro_coach.py fixtures \
 
 The script makes one request per report with a 30-second timeout. It does not retry. Failed or invalid responses count as unavailable. Do not use baseline-only evidence to claim Jev accuracy.
 
+If `--live` is set without `TYPESAFE_API_KEY`, the result is `unavailable` with `unattempted` provenance. No request is made. A completed request has `live_jev` provenance, including failed responses.
+
 ## Verify the implementation
 
 ```sh
