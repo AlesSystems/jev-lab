@@ -32,7 +32,7 @@ Each experiment uses the shared [evaluation protocol](evaluation.md). The accept
 - **Edge to expose:** “Steps: none provided” contains a heading but no steps. A confidently wrong result is still a failure.
 - **Keep it small:** output text locally; no GitHub bot or automatic issue comments.
 
-**Transfer:** forms, support intake, internal incident reports. [Detailed first experiment](first-demo-repro-coach.md).
+**Transfer:** forms, support intake, internal incident reports. [Run the implemented local experiment](../demos/repro_coach/README.md) or read the [detailed experiment](first-demo-repro-coach.md).
 
 ## 2. CI Next-Check Cards
 

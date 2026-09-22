@@ -1,6 +1,8 @@
 # First experiment: Repro Coach
 
-**Status:** proposed, not implemented or run. **Goal:** learn whether Jev can recognize useful bug-report evidence written in ordinary prose and help code select a useful follow-up checklist.
+**Status:** implemented as a local baseline and opt-in live CLI. Offline policy checks pass. No live Jev run has been made. **Goal:** learn whether Jev can recognize useful bug-report evidence written in ordinary prose and help code select a useful follow-up checklist.
+
+Run the implementation from [`demos/repro_coach`](../demos/repro_coach/README.md). The default mode evaluates the baseline without network access. Live mode requires an explicit flag and `TYPESAFE_API_KEY`.
 
 The smallest version is a Playground experiment. The next version is one local script that reads synthetic reports and prints a table. A bot, database, frontend, and generative model are unnecessary for this experiment.
 
@@ -104,7 +106,7 @@ Keep these as development examples. Add 20 separately authored reports for the h
 
 ## First implementation boundary
 
-If this idea is selected for implementation, add only a script, a fixture file, and a short usage note. Validate input size and response shape, set a bounded timeout, and keep raw source text out of diagnostics unless needed. An SDK can supply bounded retry/backoff behavior; do not retry authentication or invalid-request failures blindly. Keep a run's errors visible in its totals. [API error reference](https://docs.typesafe.ai/api#errors)
+The implementation contains one script, one fixture file, a small behavior test, and usage notes. It validates input size and response shape, bounds HTTP time and response size, makes no automatic retries, and keeps request failures visible in its totals. [API error reference](https://docs.typesafe.ai/api#errors)
 
 One small offline policy check should cover 0.2/0.8 boundaries, the middle review interval, all-present, missing evidence, malformed answers, and request failure. Keep that check separate from the paid live experiment: it verifies routing logic, not Jev's accuracy.
 
