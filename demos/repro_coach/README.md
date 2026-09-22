@@ -2,12 +2,16 @@
 
 Repro Coach selects fixed follow-up questions for missing reproduction steps, an observed result, and an execution environment. The default fixture run evaluates the local keyword baseline. It does not call Jev.
 
+Use Python 3.10 or later. The implementation was tested with Python 3.14.7. Reports are limited to 16,384 UTF-8 bytes. Live requests use a 30-second timeout and accept at most 1,000,000 response bytes.
+
 ```sh
 python3 demos/repro_coach/repro_coach.py fixtures --split dev
 python3 demos/repro_coach/repro_coach.py report "Export is broken."
 ```
 
 The fixture command writes `evidence.jsonl`. Pass `--evidence PATH` to use another output. The committed fixture file contains 10 development reports and 20 held-out reports.
+
+Each result has one status: `request_description`, `ready`, `review`, `unavailable`, or `not_run`. The `report` command accepts one report as its positional argument. The `fixtures` command accepts `--split dev` or `--split heldout`.
 
 ## Run the live experiment
 
