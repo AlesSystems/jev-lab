@@ -211,7 +211,14 @@ def save_preview(path: Path, item: PromiseInput, engine: str = "offline_baseline
                 }
                 if any(not isinstance(record.get(key), kind) for key, kind in required.items()):
                     raise TypeError
+                validate_input(
+                    cast(str, record["source_id"]),
+                    cast(str, record["author"]),
+                    cast(str, record["source_sentence"]),
+                )
                 if (
+                    record["engine"] not in {"offline_baseline", "live_jev"}
+                    or
                     record.get("owner") is not None
                     or record.get("due_date") is not None
                     or record.get("confirmation_required") != ["owner", "due_date"]
@@ -220,7 +227,7 @@ def save_preview(path: Path, item: PromiseInput, engine: str = "offline_baseline
                     raise ValueError
                 seen_ids.add(record["source_id"])
                 records.append(record)
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError):
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError):
             raise PreviewError("existing preview file is invalid; no changes written") from None
     new_record = _preview_record(item, engine)
     for record in records:
@@ -351,7 +358,8 @@ def evaluate(fixtures: Path, evidence: Path, live: bool, split: str) -> dict[str
             }
         )
     _atomic_jsonl(evidence, rows)
-    eligible = [row for row in rows if row["split"] == "heldout"]
+    metrics_split = "dev" if split == "dev" else "heldout"
+    eligible = [row for row in rows if row["split"] == metrics_split]
     automatic = [row for row in eligible if row["jev_action"] in {"proposed", "no_suggestion"}]
     correct = sum(row["jev_action"] == row["expected_action"] for row in automatic)
     baseline_correct = sum(row["baseline_action"] == row["expected_action"] for row in eligible)
@@ -382,6 +390,7 @@ def evaluate(fixtures: Path, evidence: Path, live: bool, split: str) -> dict[str
     acceptance_passed = acceptance_evaluable and surfaced >= 7 and false_suggestions <= 1
     return {
         "mode": "live" if live else "offline_baseline",
+        "metrics_split": metrics_split,
         "eligible": len(eligible),
         "automatic": len(automatic),
         "coverage": len(automatic) / len(eligible) if eligible else 0,

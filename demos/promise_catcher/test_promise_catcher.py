@@ -130,7 +130,7 @@ class CliTests(unittest.TestCase):
             )
             self.assertEqual(summary["eligible"], 10)
             self.assertEqual(summary["not_run"], 10)
-            self.assertEqual(summary["baseline_correct"], 10)
+            self.assertEqual(summary["baseline_correct"], 9)
             self.assertEqual(summary["acceptance"], "not_measured")
 
     def test_offline_catch_reports_not_run_and_requires_preview_opt_in(self):
