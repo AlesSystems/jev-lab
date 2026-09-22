@@ -9,7 +9,9 @@ import json
 import math
 import os
 import re
+import statistics
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -151,7 +153,7 @@ def call_jev(report: str, api_key: str) -> tuple[ParsedResponse | None, str | No
         return None, f"http_{error.code}", round((time.monotonic() - started) * 1000)
     except (urllib.error.URLError, TimeoutError):
         return None, "network_error", round((time.monotonic() - started) * 1000)
-    except (json.JSONDecodeError, ResponseError):
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError, OverflowError, ResponseError):
         return None, "invalid_response", round((time.monotonic() - started) * 1000)
 
 
@@ -189,11 +191,21 @@ def question_hash() -> str:
 def metrics(rows: Sequence[Mapping[str, Any]]) -> dict[str, object]:
     eligible = len(rows)
     automatic_rows = [row for row in rows if row["jev"]["status"] == "ready"]
-    correct = sum(row["jev"]["checklist"] == row["expected_checklist"] for row in automatic_rows)
+    correct = sum(not row.get("disputed", False) and row["jev"]["checklist"] == row["expected_checklist"] for row in automatic_rows)
     baseline_correct = sum(row["baseline"]["checklist"] == row["expected_checklist"] for row in rows)
     review = sum(row["jev"]["status"] == "review" for row in rows)
     unavailable = sum(row["jev"]["status"] == "unavailable" for row in rows)
     false_empty = sum(bool(row["jev"]["status"] == "ready" and not row["jev"]["checklist"] and row["expected_checklist"]) for row in rows)
+    latencies = sorted(row["elapsed_ms"] for row in rows if isinstance(row.get("elapsed_ms"), int))
+    known_input_tokens = sum(
+        row["usage"]["input_tokens"]
+        for row in rows
+        if isinstance(row.get("usage"), dict)
+        and isinstance(row["usage"].get("input_tokens"), int)
+        and not isinstance(row["usage"]["input_tokens"], bool)
+    )
+    rescues = sum(row["jev"]["status"] == "ready" and row["jev"]["checklist"] == row["expected_checklist"] and row["baseline"]["checklist"] != row["expected_checklist"] for row in rows)
+    regressions = sum(row["jev"]["status"] == "ready" and row["jev"]["checklist"] != row["expected_checklist"] and row["baseline"]["checklist"] == row["expected_checklist"] for row in rows)
     return {
         "eligible": eligible,
         "automatic": len(automatic_rows),
@@ -201,10 +213,19 @@ def metrics(rows: Sequence[Mapping[str, Any]]) -> dict[str, object]:
         "coverage": len(automatic_rows) / eligible if eligible else 0.0,
         "selective_accuracy": correct / len(automatic_rows) if automatic_rows else None,
         "review": review,
+        "review_rate": review / eligible if eligible else 0.0,
         "unavailable": unavailable,
+        "unavailable_rate": unavailable / eligible if eligible else 0.0,
         "false_empty_checklists": false_empty,
         "baseline_correct": baseline_correct,
+        "baseline_rescues": rescues,
+        "baseline_regressions": regressions,
         "review_all_automatic": 0,
+        "latency_p50_ms": statistics.median(latencies) if latencies else None,
+        "latency_p95_ms": latencies[min(len(latencies) - 1, math.ceil(len(latencies) * 0.95) - 1)] if latencies else None,
+        "known_input_tokens": known_input_tokens,
+        "known_input_cost_usd": known_input_tokens * 0.042 / 1_000_000,
+        "missing_usage": sum(bool(row.get("usage_missing")) for row in rows),
     }
 
 
@@ -217,7 +238,10 @@ def run_fixture(fixture: Mapping[str, Any], live: bool, api_key: str | None) -> 
     parsed: ParsedResponse | None = None
     error: str | None = None
     elapsed_ms: int | None = None
-    if live:
+    if not fixture["report"].strip():
+        jev_decision = Decision("request_description")
+        provenance = "local_validation"
+    elif live:
         if not api_key:
             error = "missing_api_key"
         else:
@@ -232,6 +256,7 @@ def run_fixture(fixture: Mapping[str, Any], live: bool, api_key: str | None) -> 
         "fixture_id": fixture["fixture_id"],
         "split": fixture["split"],
         "disputed": fixture["disputed"],
+        "source_report": fixture["report"],
         "expected_checklist": expected_checklist(fixture),
         "baseline": _decision_json(baseline_decision),
         "jev": _decision_json(jev_decision),
@@ -252,9 +277,10 @@ def run_fixture(fixture: Mapping[str, Any], live: bool, api_key: str | None) -> 
 def fixtures_command(args: argparse.Namespace) -> int:
     fixture_path = args.fixtures.resolve()
     evidence_path = args.evidence.resolve()
-    if fixture_path == evidence_path:
+    if fixture_path == evidence_path or (evidence_path.exists() and os.path.samefile(fixture_path, evidence_path)):
         raise ValueError("evidence path must differ from fixture path")
-    raw = json.loads(fixture_path.read_text(encoding="utf-8"))
+    fixture_bytes = fixture_path.read_bytes()
+    raw = json.loads(fixture_bytes)
     if not isinstance(raw, list):
         raise TypeError("fixture file must contain a list")
     fixtures = [validate_fixture(item) for item in raw]
@@ -263,13 +289,30 @@ def fixtures_command(args: argparse.Namespace) -> int:
         raise ValueError("fixture IDs must be unique")
     selected = [item for item in fixtures if item["split"] == args.split]
     rows = [run_fixture(item, args.live, os.environ.get("TYPESAFE_API_KEY")) for item in selected]
+    fixture_sha256 = hashlib.sha256(fixture_bytes).hexdigest()
+    intended_ids = [item["fixture_id"] for item in selected]
+    for row in rows:
+        row["fixture_sha256"] = fixture_sha256
+        row["intended_fixture_ids"] = intended_ids
     evidence_path.parent.mkdir(parents=True, exist_ok=True)
-    evidence_path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows), encoding="utf-8")
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=evidence_path.parent, delete=False) as handle:
+        temporary_path = Path(handle.name)
+        handle.write("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(temporary_path, evidence_path)
     summary = metrics(rows)
+    automatic_count = sum(row["jev"]["status"] == "ready" for row in rows)
+    incorrect_count = sum(
+        row["jev"]["status"] == "ready"
+        and (row["disputed"] or row["jev"]["checklist"] != row["expected_checklist"])
+        for row in rows
+    )
     summary.update({
-        "intended_fixture_ids": [item["fixture_id"] for item in selected],
+        "intended_fixture_ids": intended_ids,
         "provenance": "live_jev" if args.live else "baseline_only",
         "jev_acceptance_evaluable": args.live and len(rows) == len(selected) and all(row["jev"]["status"] != "unavailable" for row in rows),
+        "acceptance_passed": args.live and args.split == "heldout" and len(rows) == 20 and automatic_count >= 10 and incorrect_count <= 1,
     })
     print(json.dumps(summary, indent=2, sort_keys=True))
     return 0
@@ -279,14 +322,16 @@ def report_command(args: argparse.Namespace) -> int:
     report = args.report
     validate_report(report)
     if not report.strip():
-        print(json.dumps(asdict(Decision("request_description"))))
+        print(json.dumps({**asdict(Decision("request_description")), "engine": "local_validation", "provenance": "local_validation", "probabilities": None}))
         return 0
     if args.live:
         parsed, error, _ = call_jev(report, os.environ.get("TYPESAFE_API_KEY", "")) if os.environ.get("TYPESAFE_API_KEY") else (None, "missing_api_key", 0)
         result = decide(parsed.values) if parsed else Decision("unavailable", error=error)
+        engine, provenance, probabilities = "jev", "live_jev", parsed.values if parsed else None
     else:
         result = baseline(report)
-    print(json.dumps(asdict(result)))
+        engine, provenance, probabilities = "baseline", "baseline_only", None
+    print(json.dumps({**asdict(result), "engine": engine, "provenance": provenance, "probabilities": probabilities}))
     return 0
 
 
