@@ -22,6 +22,8 @@ from pathlib import Path
 from typing import Any, Literal
 
 MODEL = "jev-1.13.0"
+INPUT_PRICE_USD_PER_MILLION = 0.042
+PRICE_REFERENCE_DATE = "2026-09-22"
 ENDPOINT = "https://api.typesafe.ai/v1/systemone"
 MAX_REPORT_BYTES = 16_384
 MAX_RESPONSE_BYTES = 1_000_000
@@ -138,7 +140,18 @@ def parse_response(payload: object) -> ParsedResponse:
         raise ResponseError("invalid_model")
     if usage is not None and not isinstance(usage, dict):
         raise ResponseError("invalid_usage")
+    if isinstance(usage, dict) and "input_tokens" in usage and _input_tokens(usage) is None:
+        raise ResponseError("invalid_usage")
     return ParsedResponse(values, model, usage)
+
+
+def _input_tokens(usage: object) -> int | None:
+    if not isinstance(usage, dict):
+        return None
+    value = usage.get("input_tokens")
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return None
+    return value
 
 
 def call_jev(report: str, api_key: str) -> tuple[ParsedResponse | None, str | None, int]:
@@ -195,20 +208,15 @@ def metrics(rows: Sequence[Mapping[str, Any]]) -> dict[str, object]:
     eligible = len(rows)
     automatic_rows = [row for row in rows if row["jev"]["status"] == "ready"]
     correct = sum(not row.get("disputed", False) and row["jev"]["checklist"] == row["expected_checklist"] for row in automatic_rows)
-    baseline_correct = sum(row["baseline"]["checklist"] == row["expected_checklist"] for row in rows)
+    baseline_correct = sum(not row.get("disputed", False) and row["baseline"]["checklist"] == row["expected_checklist"] for row in rows)
     review = sum(row["jev"]["status"] == "review" for row in rows)
     unavailable = sum(row["jev"]["status"] == "unavailable" for row in rows)
     false_empty = sum(bool(row["jev"]["status"] == "ready" and not row["jev"]["checklist"] and row["expected_checklist"]) for row in rows)
     latencies = sorted(row["elapsed_ms"] for row in rows if isinstance(row.get("elapsed_ms"), int))
-    known_input_tokens = sum(
-        row["usage"]["input_tokens"]
-        for row in rows
-        if isinstance(row.get("usage"), dict)
-        and isinstance(row["usage"].get("input_tokens"), int)
-        and not isinstance(row["usage"]["input_tokens"], bool)
-    )
-    rescues = sum(row["jev"]["status"] == "ready" and row["jev"]["checklist"] == row["expected_checklist"] and row["baseline"]["checklist"] != row["expected_checklist"] for row in rows)
-    regressions = sum(row["jev"]["status"] == "ready" and row["jev"]["checklist"] != row["expected_checklist"] and row["baseline"]["checklist"] == row["expected_checklist"] for row in rows)
+    known_input_tokens = sum(tokens for row in rows if (tokens := _input_tokens(row.get("usage"))) is not None)
+    missing_usage = sum(bool(row.get("attempts")) and _input_tokens(row.get("usage")) is None for row in rows)
+    rescues = sum(not row.get("disputed", False) and row["jev"]["status"] == "ready" and row["jev"]["checklist"] == row["expected_checklist"] and row["baseline"]["checklist"] != row["expected_checklist"] for row in rows)
+    regressions = sum(not row.get("disputed", False) and row["jev"]["status"] == "ready" and row["jev"]["checklist"] != row["expected_checklist"] and row["baseline"]["checklist"] == row["expected_checklist"] for row in rows)
     return {
         "eligible": eligible,
         "automatic": len(automatic_rows),
@@ -228,8 +236,11 @@ def metrics(rows: Sequence[Mapping[str, Any]]) -> dict[str, object]:
         "latency_p50_ms": statistics.median(latencies) if latencies else None,
         "latency_p95_ms": latencies[min(len(latencies) - 1, math.ceil(len(latencies) * 0.95) - 1)] if latencies else None,
         "known_input_tokens": known_input_tokens,
-        "known_input_cost_usd": known_input_tokens * 0.042 / 1_000_000,
-        "missing_usage": sum(bool(row.get("usage_missing")) for row in rows),
+        "known_input_cost_usd": known_input_tokens * INPUT_PRICE_USD_PER_MILLION / 1_000_000,
+        "known_cost_is_partial": missing_usage > 0,
+        "input_price_usd_per_million": INPUT_PRICE_USD_PER_MILLION,
+        "price_reference_date": PRICE_REFERENCE_DATE,
+        "missing_usage": missing_usage,
     }
 
 
@@ -316,7 +327,7 @@ def fixtures_command(args: argparse.Namespace) -> int:
     summary.update({
         "intended_fixture_ids": intended_ids,
         "provenance": "live_jev" if args.live else "baseline_only",
-        "jev_acceptance_evaluable": args.live and len(rows) == len(selected) and all(row["jev"]["status"] != "unavailable" for row in rows),
+        "jev_acceptance_evaluable": args.live and args.split == "heldout" and len(rows) == 20 and len(rows) == len(selected),
         "acceptance_passed": args.live and args.split == "heldout" and len(rows) == 20 and automatic_count >= 10 and incorrect_count <= 1,
     })
     print(json.dumps(summary, indent=2, sort_keys=True))
