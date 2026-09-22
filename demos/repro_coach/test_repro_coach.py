@@ -26,7 +26,7 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual((review.status, review.checklist), ("review", ()))
 
     def test_invalid_answer_is_unavailable(self):
-        for invalid in (True, math.nan, -0.1, 1.1, "0.9"):
+        for invalid in (True, math.nan, -0.1, 1.1, 10**400, "0.9"):
             with self.subTest(invalid=invalid):
                 result = repro_coach.decide({"steps_present": invalid, "result_present": 0.8, "environment_present": 0.8})
                 self.assertEqual(result.status, "unavailable")
