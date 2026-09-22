@@ -89,6 +89,19 @@ class PreviewTests(unittest.TestCase):
                 )
             self.assertEqual(path.read_text(), "not-json\n")
 
+    def test_shaped_invalid_preview_is_rejected_without_overwrite(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "previews.jsonl"
+            for invalid in ("{}\n", "[]\n"):
+                with self.subTest(invalid=invalid):
+                    path.write_text(invalid)
+                    with self.assertRaises(promise_catcher.PreviewError):
+                        promise_catcher.save_preview(
+                            path,
+                            promise_catcher.PromiseInput("note-17", "Ada", "I will send it."),
+                        )
+                    self.assertEqual(path.read_text(), invalid)
+
     def test_failed_atomic_replace_preserves_existing_preview(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "previews.jsonl"
@@ -106,6 +119,20 @@ class PreviewTests(unittest.TestCase):
 
 
 class CliTests(unittest.TestCase):
+    def test_dev_evaluation_summarizes_the_selected_ten_rows(self):
+        fixtures = Path(__file__).with_name("fixtures.jsonl")
+        with tempfile.TemporaryDirectory() as directory:
+            summary = promise_catcher.evaluate(
+                fixtures,
+                Path(directory) / "evidence.jsonl",
+                live=False,
+                split="dev",
+            )
+            self.assertEqual(summary["eligible"], 10)
+            self.assertEqual(summary["not_run"], 10)
+            self.assertEqual(summary["baseline_correct"], 10)
+            self.assertEqual(summary["acceptance"], "not_measured")
+
     def test_offline_catch_reports_not_run_and_requires_preview_opt_in(self):
         script = Path(__file__).with_name("promise_catcher.py")
         with tempfile.TemporaryDirectory() as directory:
