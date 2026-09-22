@@ -4,7 +4,9 @@ The offline checks cover threshold endpoints, review routing, invalid Noul value
 
 Evidence distinguishes `baseline_only`, `unattempted`, and `live_jev` provenance. An attempted request without valid input-token usage counts as missing usage.
 
-The committed [offline baseline evidence](evidence/offline-baseline.jsonl) records 20 held-out synthetic reports. The keyword baseline matched 11 of 20 whole checklists. The fixture labels are author-supplied and await independent human validation, so this count is an implementation observation rather than a quality claim.
+The committed [offline baseline evidence](evidence/offline-baseline.jsonl) records 20 held-out synthetic reports. The keyword baseline matched 3 of 20 whole checklists. The replacement set removed overlap with development templates before any live run and passed an independent fixture review. The synthetic labels still await human validation, so this count is an implementation observation rather than a quality claim.
+
+The fixture SHA-256 recorded by the run is `bd13207d032859cb2a3100d3208329803c5268e15206033c7be079f7167fd71c`.
 
 Reproduce the file with Python 3.10 or later:
 
