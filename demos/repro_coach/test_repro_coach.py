@@ -51,6 +51,10 @@ class BoundaryTests(unittest.TestCase):
         payload["answers"]["steps_present"]["type"] = "choice"
         with self.assertRaises(repro_coach.ResponseError):
             repro_coach.parse_response(payload)
+        payload["answers"]["steps_present"]["type"] = "noul"
+        payload["usage"] = {"input_tokens": True}
+        with self.assertRaises(repro_coach.ResponseError):
+            repro_coach.parse_response(payload)
 
     def test_transport_decode_failures_are_sanitized(self):
         with mock.patch("urllib.request.urlopen") as urlopen:
@@ -75,6 +79,20 @@ class BoundaryTests(unittest.TestCase):
         self.assertEqual(metrics["selective_accuracy"], 1.0)
         self.assertEqual(metrics["review_rate"], 0.25)
         self.assertEqual(metrics["unavailable_rate"], 0.25)
+
+    def test_metrics_treat_disputes_and_missing_usage_consistently(self):
+        rows = [
+            {"disputed": True, "expected_checklist": [], "baseline": {"checklist": []}, "jev": {"status": "ready", "checklist": []}, "attempts": 1, "usage": {"input_tokens": 10}},
+            {"disputed": False, "expected_checklist": ["a"], "baseline": {"checklist": []}, "jev": {"status": "unavailable", "checklist": []}, "attempts": 1, "usage": {}},
+            {"disputed": False, "expected_checklist": [], "baseline": {"checklist": []}, "jev": {"status": "unavailable", "checklist": []}, "attempts": 1, "usage": None},
+        ]
+        result = repro_coach.metrics(rows)
+        self.assertEqual(result["correct_automatic"], 0)
+        self.assertEqual(result["baseline_correct"], 1)
+        self.assertEqual(result["baseline_rescues"], 0)
+        self.assertEqual(result["missing_usage"], 2)
+        self.assertEqual(result["known_input_tokens"], 10)
+        self.assertTrue(result["known_cost_is_partial"])
 
     def test_blank_fixture_skips_live_call(self):
         fixture = {
