@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import math
+import os
 import subprocess
 import sys
 import tempfile
@@ -55,6 +56,10 @@ class BoundaryTests(unittest.TestCase):
         payload["usage"] = {"input_tokens": True}
         with self.assertRaises(repro_coach.ResponseError):
             repro_coach.parse_response(payload)
+        payload["usage"] = {"input_tokens": 12}
+        payload["model"] = ""
+        with self.assertRaises(repro_coach.ResponseError):
+            repro_coach.parse_response(payload)
 
     def test_transport_decode_failures_are_sanitized(self):
         with mock.patch("urllib.request.urlopen") as urlopen:
@@ -104,6 +109,17 @@ class BoundaryTests(unittest.TestCase):
         call.assert_not_called()
         self.assertEqual(row["jev"]["status"], "request_description")
 
+    def test_failed_attempt_marks_usage_missing(self):
+        fixture = {
+            "fixture_id": "failed", "split": "dev", "report": "Export is broken.", "disputed": False,
+            "expected_present": {key: False for key in repro_coach.QUESTIONS},
+        }
+        with mock.patch.object(repro_coach, "call_jev", return_value=(None, "network_error", 4)):
+            row = repro_coach.run_fixture(fixture, True, "secret")
+        self.assertEqual(row["attempts"], 1)
+        self.assertTrue(row["usage_missing"])
+        self.assertEqual(row["provenance"], "live_jev")
+
 
 class CliTests(unittest.TestCase):
     def test_blank_report_requests_description_without_live_configuration(self):
@@ -124,6 +140,15 @@ class CliTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertEqual((payload["engine"], payload["provenance"]), ("baseline", "baseline_only"))
         self.assertIn("probabilities", payload)
+
+    def test_live_without_key_is_explicitly_unattempted(self):
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "report", "Export is broken.", "--live"],
+            capture_output=True, text=True, check=False, env={"PATH": os.environ.get("PATH", "")},
+        )
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["status"], "unavailable")
+        self.assertEqual(payload["provenance"], "unattempted")
 
     def test_baseline_run_records_not_run(self):
         fixture = [{
