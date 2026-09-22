@@ -7,7 +7,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 SCRIPT = Path(__file__).with_name("repro_coach.py")
 SPEC = importlib.util.spec_from_file_location("repro_coach", SCRIPT)
 assert SPEC and SPEC.loader
@@ -54,10 +53,10 @@ class BoundaryTests(unittest.TestCase):
 
     def test_whole_checklist_metrics_keep_all_inputs_in_denominator(self):
         rows = [
-            {"expected_checklist": ["a"], "jev": {"status": "ready", "checklist": ["a"]}},
-            {"expected_checklist": [], "jev": {"status": "ready", "checklist": []}},
-            {"expected_checklist": ["a"], "jev": {"status": "review", "checklist": []}},
-            {"expected_checklist": [], "jev": {"status": "unavailable", "checklist": []}},
+            {"expected_checklist": ["a"], "baseline": {"checklist": []}, "jev": {"status": "ready", "checklist": ["a"]}},
+            {"expected_checklist": [], "baseline": {"checklist": []}, "jev": {"status": "ready", "checklist": []}},
+            {"expected_checklist": ["a"], "baseline": {"checklist": []}, "jev": {"status": "review", "checklist": []}},
+            {"expected_checklist": [], "baseline": {"checklist": []}, "jev": {"status": "unavailable", "checklist": []}},
         ]
         metrics = repro_coach.metrics(rows)
         self.assertEqual(metrics["eligible"], 4)
