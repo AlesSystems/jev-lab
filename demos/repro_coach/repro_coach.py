@@ -83,7 +83,10 @@ class ResponseError(ValueError):
 def _probability(value: object) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ResponseError("invalid_probability")
-    number = float(value)
+    try:
+        number = float(value)
+    except OverflowError as error:
+        raise ResponseError("invalid_probability") from error
     if not math.isfinite(number) or not 0.0 <= number <= 1.0:
         raise ResponseError("invalid_probability")
     return number
