@@ -13,11 +13,19 @@ This repository documents what Jev is useful for, where its limits appear, and h
 
 ## Demos
 
-Demos will be added individually as they are validated. Each demo should include setup instructions, expected behavior, and known limitations.
+Start with the [demo idea shortlist](docs/demo-ideas.md): eight small experiments for developer tools, SaaS workflows, and automations. Each includes a concrete input, Jev's decision, a simpler baseline, and a success check.
+
+Recommended first experiment: [Repro Coach](docs/first-demo-repro-coach.md), which checks bug reports for missing information and selects a fixed follow-up template.
+
+These are proposed experiments, not implemented or validated demos. No live Jev results have been recorded yet.
 
 ## Research notes
 
-Research notes will distinguish observed results from assumptions and vendor claims.
+- [Where Jev fits](docs/jev-fit.md) — primitives, integration boundaries, limitations, and dated primary sources.
+- [Shared demo architecture](docs/diagrams/jev-decision-loop.html) — a standalone visual of the application/Jev boundary. Open the HTML file locally; GitHub displays its source.
+- [How to evaluate a demo](docs/evaluation.md) — compare against simple code, measure uncertainty, and record evidence.
+
+Research notes distinguish observed results from assumptions and vendor claims. Research snapshot: **2026-09-22**.
 
 ## Resources
 
