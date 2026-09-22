@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 SCRIPT = Path(__file__).with_name("repro_coach.py")
 SPEC = importlib.util.spec_from_file_location("repro_coach", SCRIPT)
@@ -51,6 +52,14 @@ class BoundaryTests(unittest.TestCase):
         with self.assertRaises(repro_coach.ResponseError):
             repro_coach.parse_response(payload)
 
+    def test_transport_decode_failures_are_sanitized(self):
+        with mock.patch("urllib.request.urlopen") as urlopen:
+            response = urlopen.return_value.__enter__.return_value
+            response.read.return_value = b"\xff"
+            parsed, error, _ = repro_coach.call_jev("report", "secret")
+        self.assertIsNone(parsed)
+        self.assertEqual(error, "invalid_response")
+
     def test_whole_checklist_metrics_keep_all_inputs_in_denominator(self):
         rows = [
             {"expected_checklist": ["a"], "baseline": {"checklist": []}, "jev": {"status": "ready", "checklist": ["a"]}},
@@ -64,6 +73,18 @@ class BoundaryTests(unittest.TestCase):
         self.assertEqual(metrics["correct_automatic"], 2)
         self.assertEqual(metrics["coverage"], 0.5)
         self.assertEqual(metrics["selective_accuracy"], 1.0)
+        self.assertEqual(metrics["review_rate"], 0.25)
+        self.assertEqual(metrics["unavailable_rate"], 0.25)
+
+    def test_blank_fixture_skips_live_call(self):
+        fixture = {
+            "fixture_id": "blank", "split": "dev", "report": " ", "disputed": False,
+            "expected_present": {key: False for key in repro_coach.QUESTIONS},
+        }
+        with mock.patch.object(repro_coach, "call_jev") as call:
+            row = repro_coach.run_fixture(fixture, True, "secret")
+        call.assert_not_called()
+        self.assertEqual(row["jev"]["status"], "request_description")
 
 
 class CliTests(unittest.TestCase):
@@ -76,6 +97,15 @@ class CliTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0)
         self.assertEqual(json.loads(result.stdout)["status"], "request_description")
+
+    def test_report_output_identifies_engine_and_provenance(self):
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "report", "Export is broken."],
+            capture_output=True, text=True, check=False,
+        )
+        payload = json.loads(result.stdout)
+        self.assertEqual((payload["engine"], payload["provenance"]), ("baseline", "baseline_only"))
+        self.assertIn("probabilities", payload)
 
     def test_baseline_run_records_not_run(self):
         fixture = [{
