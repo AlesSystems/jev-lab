@@ -2,6 +2,8 @@
 
 This local demo checks one selected sentence for an explicit future commitment by its known author. It proposes a task preview only when the commitment is clear and the action is not complete. The preview preserves the source sentence and leaves both the owner and the due date for human confirmation.
 
+Use Python 3.11 or newer.
+
 The default mode runs a phrase baseline. It does not call Jev. Pass `--live` to call `jev-1.13.0` through `https://api.typesafe.ai/v1/systemone` with `TYPESAFE_API_KEY`.
 
 ## Check one sentence

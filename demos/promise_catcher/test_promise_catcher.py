@@ -191,6 +191,7 @@ class CliTests(unittest.TestCase):
             )
             self.assertEqual(summary["usage_missing_count"], 10)
             self.assertEqual(summary["input_tokens_known"], 0)
+            self.assertTrue(summary["cost_partial"])
 
     def test_offline_catch_reports_not_run_and_requires_preview_opt_in(self):
         script = Path(__file__).with_name("promise_catcher.py")

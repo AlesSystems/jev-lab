@@ -28,6 +28,8 @@ MAX_TEXT_CHARS = 4_000
 MAX_RESPONSE_BYTES = 1_000_000
 TIMEOUT_SECONDS = 30.0
 QUESTION_VERSION = "promise-v1"
+INPUT_PRICE_USD_PER_MILLION = 0.042
+PRICE_DATE = "2026-09-22"
 QUESTIONS: dict[str, dict[str, object]] = {
     "commitment": {
         "type": "noul",
@@ -149,6 +151,14 @@ def parse_jev_response(raw: object) -> JevAnswers:
     usage = raw.get("usage")
     if usage is not None and not isinstance(usage, dict):
         raise ResponseError("response usage must be an object when present")
+    if isinstance(usage, dict) and "input_tokens" in usage:
+        input_tokens = usage["input_tokens"]
+        if (
+            isinstance(input_tokens, bool)
+            or not isinstance(input_tokens, int)
+            or input_tokens < 0
+        ):
+            raise ResponseError("usage input_tokens must be a nonnegative integer")
     return JevAnswers(
         probabilities["commitment"], probabilities["completed"], model, usage
     )
@@ -351,7 +361,9 @@ def evaluate(fixtures: Path, evidence: Path, live: bool, split: str) -> dict[str
                 "requested_model": MODEL if live else None,
                 "returned_model": returned_model,
                 "usage": usage,
-                "usage_missing": live and usage is None,
+                "usage_missing": live and (
+                    usage is None or not isinstance(usage.get("input_tokens"), int)
+                ),
                 "elapsed_ms": elapsed,
                 "attempts": 1 if live else 0,
                 "error": error,
@@ -386,8 +398,25 @@ def evaluate(fixtures: Path, evidence: Path, live: bool, split: str) -> dict[str
             token_count = row_usage.get("input_tokens")
             if isinstance(token_count, int) and not isinstance(token_count, bool):
                 input_tokens += token_count
-    acceptance_evaluable = live and split in {"all", "heldout"} and len(eligible) == 20
+    expected_counts = {
+        action: sum(row["expected_action"] == action for row in eligible)
+        for action in ("proposed", "no_suggestion")
+    }
+    if not live:
+        acceptance_reason = "live_jev_not_run"
+    elif split == "dev":
+        acceptance_reason = "heldout_not_selected"
+    elif len(eligible) != 20:
+        acceptance_reason = "heldout_count_not_20"
+    elif any(bool(row["disputed"]) for row in eligible):
+        acceptance_reason = "heldout_labels_disputed"
+    elif expected_counts != {"proposed": 10, "no_suggestion": 10}:
+        acceptance_reason = "heldout_labels_not_10_and_10"
+    else:
+        acceptance_reason = "heldout_labels_eligible"
+    acceptance_evaluable = acceptance_reason == "heldout_labels_eligible"
     acceptance_passed = acceptance_evaluable and surfaced >= 7 and false_suggestions <= 1
+    estimated_cost = input_tokens * INPUT_PRICE_USD_PER_MILLION / 1_000_000
     return {
         "mode": "live" if live else "offline_baseline",
         "metrics_split": metrics_split,
@@ -408,11 +437,14 @@ def evaluate(fixtures: Path, evidence: Path, live: bool, split: str) -> dict[str
         "false_suggestions": false_suggestions,
         "input_tokens_known": input_tokens,
         "usage_missing_count": usage_missing,
-        "cost": None,
-        "cost_note": "unknown; no price is configured",
+        "estimated_input_cost_usd": estimated_cost,
+        "cost_partial": usage_missing > 0,
+        "input_price_usd_per_million": INPUT_PRICE_USD_PER_MILLION,
+        "price_date": PRICE_DATE,
         "latency_p50_ms": statistics.median(latencies) if live and latencies else None,
         "latency_p95_ms": sorted(latencies)[max(0, math.ceil(len(latencies) * 0.95) - 1)] if live and latencies else None,
         "jev_acceptance_evaluable": acceptance_evaluable,
+        "acceptance_reason": acceptance_reason,
         "acceptance": "pass" if acceptance_passed else ("fail" if acceptance_evaluable else "not_measured"),
         "evidence": str(evidence),
     }
