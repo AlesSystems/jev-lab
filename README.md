@@ -17,7 +17,7 @@ Start with the [demo idea shortlist](docs/demo-ideas.md): eight small experiment
 
 Recommended first experiment: [Repro Coach](docs/first-demo-repro-coach.md), which checks bug reports for missing information and selects a fixed follow-up template.
 
-These are proposed experiments, not implemented or validated demos. No live Jev results have been recorded yet.
+See each demo's linked documentation for implementation and validation status. No live Jev results have been recorded yet.
 
 ## Research notes
 
