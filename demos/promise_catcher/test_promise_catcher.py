@@ -1,9 +1,11 @@
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import promise_catcher
 
@@ -36,12 +38,13 @@ class DecisionTests(unittest.TestCase):
             promise_catcher.parse_jev_response(valid).commitment,
             0.9,
         )
-        for bad_value in [True, float("nan"), -0.1, 1.1, "0.9"]:
+        for bad_value in [True, float("nan"), -0.1, 1.1, "0.9", 10**400]:
             broken = json.loads(json.dumps(valid))
             broken["answers"]["commitment"]["noul"] = bad_value
-            with self.subTest(bad_value=bad_value):
-                with self.assertRaises(promise_catcher.ResponseError):
-                    promise_catcher.parse_jev_response(broken)
+            with self.subTest(bad_value=bad_value), self.assertRaises(
+                promise_catcher.ResponseError
+            ):
+                promise_catcher.parse_jev_response(broken)
 
 
 class PreviewTests(unittest.TestCase):
@@ -67,6 +70,7 @@ class PreviewTests(unittest.TestCase):
                     "owner": None,
                     "due_date": None,
                     "confirmation_required": ["owner", "due_date"],
+                    "engine": "offline_baseline",
                 },
             )
 
@@ -80,6 +84,21 @@ class PreviewTests(unittest.TestCase):
                     promise_catcher.PromiseInput("note-17", "Ada", "I will send it."),
                 )
             self.assertEqual(path.read_text(), "not-json\n")
+
+    def test_failed_atomic_replace_preserves_existing_preview(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "previews.jsonl"
+            first = promise_catcher.PromiseInput("note-1", "Ada", "I will send it.")
+            promise_catcher.save_preview(path, first)
+            before = path.read_text()
+            with mock.patch.object(
+                promise_catcher.os, "replace", side_effect=OSError("disk")
+            ), self.assertRaises(OSError):
+                promise_catcher.save_preview(
+                    path,
+                    promise_catcher.PromiseInput("note-2", "Ben", "I will review it."),
+                )
+            self.assertEqual(path.read_text(), before)
 
 
 class CliTests(unittest.TestCase):
@@ -112,6 +131,44 @@ class CliTests(unittest.TestCase):
             )
             self.assertEqual(json.loads(result.stdout)["preview_status"], "created")
             self.assertTrue(preview.exists())
+
+            replay = subprocess.run(
+                [*command, "--preview", str(preview)],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            self.assertEqual(json.loads(replay.stdout)["preview_status"], "duplicate")
+            self.assertEqual(len(preview.read_text().splitlines()), 1)
+
+    def test_live_failure_never_writes_a_baseline_preview(self):
+        script = Path(__file__).with_name("promise_catcher.py")
+        with tempfile.TemporaryDirectory() as directory:
+            preview = Path(directory) / "previews.jsonl"
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "catch",
+                    "--source-id",
+                    "note-17",
+                    "--author",
+                    "Ada",
+                    "--sentence",
+                    "I will send it.",
+                    "--live",
+                    "--preview",
+                    str(preview),
+                ],
+                capture_output=True,
+                text=True,
+                env={key: value for key, value in os.environ.items() if key != "TYPESAFE_API_KEY"},
+                check=True,
+            )
+            output = json.loads(result.stdout)
+            self.assertEqual(output["jev_action"], "unavailable")
+            self.assertEqual(output["preview_status"], "not_requested")
+            self.assertFalse(preview.exists())
 
 
 if __name__ == "__main__":
