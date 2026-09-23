@@ -124,6 +124,8 @@ Each experiment uses the shared [evaluation protocol](evaluation.md). The accept
 
 **Transfer:** meeting follow-ups and customer-success workflows. This is an automation design, not a request to schedule an automation in Codex.
 
+[Run the local Follow-up Promise Catcher demo](../demos/promise_catcher/README.md).
+
 ## 8. Interruption Budget
 
 **Moment:** every deployment or integration message interrupts you, including expected maintenance chatter.
