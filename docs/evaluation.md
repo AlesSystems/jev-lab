@@ -1,6 +1,6 @@
 # How to tell whether a demo is useful
 
-**Status:** evaluation plan; no measured results yet. This protocol applies to the [demo ideas](demo-ideas.md). Small fixture sets are learning tools, not proof of production reliability.
+**Status:** evaluation protocol. Per-demo evidence notes record offline baseline results; live Jev performance remains unmeasured. This protocol applies to the [demo ideas](demo-ideas.md). Small fixture sets are learning tools, not proof of production reliability.
 
 ## One short experiment
 
