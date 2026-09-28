@@ -106,6 +106,36 @@ class ClaimTests(unittest.TestCase):
         self.assertEqual(payload, {"ok": True})
         board.assert_called_once_with("csv_faster", api_key="secret")
 
+    def test_custom_endpoint_passes_text_to_jev_without_fixture_label(self):
+        seen = {}
+        def transport(body, key):
+            seen.update(json.loads(body))
+            return choice_body("contradicted", 0.93)
+        original = claim_check.post_jev
+        with mock.patch.dict("os.environ", {"TYPESAFE_API_KEY": "secret"}):
+            with mock.patch.object(claim_check, "post_jev", side_effect=lambda body, key, _: original(body, key, transport)):
+                status, board, _ = claim_check.route("POST", "/api/check", json.dumps({"claim": "Revenue fell", "evidence": "Revenue grew by 20%."}).encode())
+        self.assertEqual(status, 200)
+        self.assertEqual(seen["state"], {"claim": "Revenue fell", "evidence": "Revenue grew by 20%."})
+        self.assertEqual(board["decision"], "CONTRADICTED")
+        self.assertNotIn("label", board)
+
+    def test_custom_without_key_is_honest_baseline(self):
+        with mock.patch.dict("os.environ", {}, clear=True):
+            status, board, _ = claim_check.route("POST", "/api/check", b'{"claim":"Revenue fell", "evidence":"Revenue grew"}')
+        self.assertEqual(status, 200)
+        self.assertEqual(board["decision"], "BASELINE ONLY")
+        self.assertEqual(board["engine"], "offline_baseline")
+        self.assertIsNone(board["jev"])
+        self.assertNotIn("label", board)
+
+    def test_custom_rejects_invalid_or_oversized_input_before_inference(self):
+        with mock.patch.object(claim_check, "post_jev") as post:
+            for body in [b"{", b"[]", b"null", b'{}', b'{"claim":false,"evidence":"x"}', b'{"claim":" ","evidence":"x"}', json.dumps({"claim": "x" * 2001, "evidence": "x"}).encode(), json.dumps({"claim": "x", "evidence": "x" * 12001}).encode()]:
+                self.assertEqual(claim_check.route("POST", "/api/check", body)[0], 400)
+            self.assertEqual(claim_check.route("POST", "/api/check", b"x" * 64001)[0], 413)
+            post.assert_not_called()
+
 
 def choice_body(choice: str, confidence: float) -> bytes:
     probabilities = {"supported": 0.0, "contradicted": 0.0, "insufficient_evidence": 0.0}
