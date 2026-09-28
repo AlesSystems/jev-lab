@@ -6,6 +6,7 @@ const form = document.querySelector("#check-form");
 const claim = document.querySelector("#claim");
 const evidence = document.querySelector("#evidence");
 const run = document.querySelector("#run");
+const keyStatus = document.querySelector("#key-status");
 let revision = 0;
 
 function reading(verdict) { return verdict.replaceAll("_", " "); }
@@ -80,9 +81,12 @@ form.addEventListener("submit", async event => {
 async function start() {
   const initialRevision = revision;
   try {
-    const response = await fetch("/api/scenarios");
+    const response = await fetch("/api/scenarios", { cache: "no-store" });
     if (!response.ok) throw new Error("Unable to load examples.");
     const body = await response.json();
+    keyStatus.textContent = body.api_key_configured
+      ? "TYPESAFE_API_KEY detected in this server. Jev is ready to try."
+      : "No TYPESAFE_API_KEY in this server process. Checks use the keyword baseline.";
     for (const scenario of body.scenarios) {
       const button = document.createElement("button");
       button.type = "button";
@@ -98,6 +102,7 @@ async function start() {
     }
     if (revision === initialRevision && !claim.value && !evidence.value) scenarios.firstElementChild?.click();
   } catch {
+    keyStatus.textContent = "Could not check the server's API key status.";
     if (revision === initialRevision) why.textContent = "Examples could not load. Enter your own claim and evidence, then run the check.";
   }
 }

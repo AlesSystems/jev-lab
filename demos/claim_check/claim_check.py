@@ -228,7 +228,7 @@ def route(method: str, path: str, body: bytes = b"") -> tuple[int, dict[str, Any
     if method != "GET":
         return 405, {"error": "method_not_allowed"}, "application/json"
     if parsed.path == "/api/scenarios":
-        return 200, {"scenarios": scenario_list()}, "application/json"
+        return 200, {"scenarios": scenario_list(), "api_key_configured": api_key_from_env() is not None}, "application/json"
     if parsed.path == "/api/board":
         scenario_id = (parse_qs(parsed.query).get("id") or [""])[0]
         try:
@@ -273,8 +273,12 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def serve(port: int) -> None:
-    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    try:
+        server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    except OSError as error:
+        raise SystemExit(f"Could not start on port {port}: {error}. Check for an existing server on that port.") from error
     print(f"http://127.0.0.1:{port}", flush=True)
+    print(f"TYPESAFE_API_KEY: {'detected' if api_key_from_env() else 'missing'} in this server process", flush=True)
     server.serve_forever()
 
 
