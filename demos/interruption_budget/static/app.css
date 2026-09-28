@@ -201,7 +201,7 @@ select {
 }
 
 
-.strip p { margin: 0; }
+.strip p { margin: 0; overflow-wrap: anywhere; }
 
 .strip .meta {
   margin-top: 8px;
@@ -264,3 +264,17 @@ select {
     text-transform: uppercase;
   }
 }
+
+.test-form {
+  max-width: 48rem;
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--sheet);
+  border: 1px solid var(--grid);
+}
+
+.test-form > label:first-child { display: block; font-weight: 600; margin-bottom: 8px; }
+.test-form textarea { display: block; width: 100%; padding: 12px; font: inherit; border: 1px solid var(--line); border-radius: 8px; resize: vertical; }
+.test-form .check { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.test-form .rule { margin-top: 16px; }
+.status { margin: 0 0 6px; font-weight: 600; color: var(--cobalt); }

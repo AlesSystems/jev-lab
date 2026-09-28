@@ -137,6 +137,59 @@ class MappingTests(unittest.TestCase):
         self.assertEqual(payload, {"ok": True})
         board.assert_called_once_with("vendor_csv", api_key="secret")
 
+    def test_custom_csv_uses_samples_without_fixture_labels(self):
+        csv_text = 'Organisation,Email\n"Acme, Inc",person@example.test\nOther,other@example.test'
+        scenario = field_matchmaker.parse_csv(csv_text)
+        board = field_matchmaker.board_payload(scenario, api_key="secret", transport=lambda raw, key: column_body({
+            "c0": ("company_name", 0.9), "c1": ("contact_email", 0.95),
+        }))
+        self.assertFalse(board["has_labels"])
+        self.assertEqual(board["columns"][0]["samples"], ("Acme, Inc", "Other"))
+        self.assertIsNone(board["columns"][0]["label"])
+        self.assertEqual(board["columns"][0]["jev"]["target"], "company_name")
+        body = {"csv": csv_text, "choices": [
+            {"header": "Organisation", "target_id": "company_name"},
+            {"header": "Email", "target_id": "contact_email"},
+        ]}
+        status, result, _ = field_matchmaker.route("POST", "/api/preview", json.dumps(body).encode())
+        self.assertEqual(status, 200)
+        self.assertEqual(result["preview"][0]["samples"], ["Acme, Inc", "Other"])
+        body["choices"][1]["target_id"] = "company_name"
+        _, result, _ = field_matchmaker.route("POST", "/api/preview", json.dumps(body).encode())
+        self.assertEqual(result["decision"], "CONFLICT")
+        self.assertEqual(result["preview"], [])
+        self.assertNotIn("custom", field_matchmaker.SCENARIOS)
+
+    def test_custom_input_bounds_and_invalid_shapes(self):
+        for value in [None, "", "Header", "A,A\n1,2", "A,B\n1", 'A\n"unfinished',
+                      "A\n" + "x" * 501, "A\n" + "1\n" * 21,
+                      ",".join(str(i) for i in range(11)) + "\n" + ",".join("1" for _ in range(11)),
+                      "x" * 12001]:
+            with self.subTest(value=str(value)[:40]):
+                status, _, _ = field_matchmaker.route("POST", "/api/board", json.dumps({"csv": value}).encode())
+                self.assertEqual(status, 400)
+        status, _, _ = field_matchmaker.route("POST", "/api/board", b"x" * 64001)
+        self.assertEqual(status, 413)
+        status, _, _ = field_matchmaker.route("POST", "/api/board", b"\xff")
+        self.assertEqual(status, 400)
+
+    def test_fixture_loading_never_calls_jev_and_round_trips_csv(self):
+        with mock.patch.object(field_matchmaker, "post_jev", side_effect=AssertionError("called Jev")):
+            status, result, _ = field_matchmaker.route("GET", "/api/fixture?id=vendor_csv")
+        self.assertEqual(status, 200)
+        parsed = field_matchmaker.parse_csv(result["csv"])
+        self.assertEqual(parsed.columns[0].header, "Trading name")
+        self.assertEqual(parsed.columns[0].samples, ("Northwind", "Acme Ltd", "Bright Studio"))
+
+    def test_custom_board_route_keeps_credentials_server_side(self):
+        with mock.patch.dict("os.environ", {"TYPESAFE_API_KEY": "secret"}):
+            with mock.patch.object(field_matchmaker, "post_jev", return_value=(json.loads(column_body({"c0": ("country", 0.9)})), None)) as post:
+                status, result, _ = field_matchmaker.route("POST", "/api/board", b'{"csv":"Nation\\nDK"}')
+        self.assertEqual(status, 200)
+        self.assertEqual(result["engine"], "live_jev")
+        self.assertEqual(post.call_args.args[1], "secret")
+        self.assertNotIn("secret", json.dumps(result))
+
 
 def column_body(readings: dict[str, tuple[str, float]]) -> bytes:
     answers = {}

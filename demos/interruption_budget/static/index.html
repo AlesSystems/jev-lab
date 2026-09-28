@@ -9,8 +9,15 @@
 </head>
 <body>
   <h1>Interruption budget</h1>
-  <p class="lede" id="preference">Interrupt for blocked work. Otherwise digest. With an API key, Jev scores each event after quiet hours and the page flag.</p>
-  <p class="decision" id="decision" aria-live="polite">Clear</p>
+  <p class="lede" id="preference">Interrupt for blocked work. Otherwise digest. Try your own event or inspect the sample inbox.</p>
+  <form id="event-form" class="test-form">
+    <label for="event-text">Event to sort</label>
+    <textarea id="event-text" maxlength="1000" required rows="3">The checkout queue is blocked and customers cannot place orders.</textarea>
+    <label class="check"><input id="page" type="checkbox"> Priority page flag (always Attention now)</label>
+    <div class="rule"><button class="primary" id="sort" type="submit">Sort my event</button><button id="sample" type="button">Show sample inbox</button></div>
+  </form>
+  <p class="decision" id="decision" aria-live="polite">Loading</p>
+  <p class="status" id="status" role="status"></p>
   <p class="why" id="why"></p>
   <div class="rule">
     <button id="quiet" type="button" aria-pressed="false">Hold quiet hours</button>

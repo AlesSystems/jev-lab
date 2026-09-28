@@ -4,6 +4,8 @@ Interruption budget sorts synthetic events into Attention now, Review, and Diges
 
 Without `TYPESAFE_API_KEY`, the page stays on that baseline. With the key, the server asks `jev-1.13.0` to score the remaining events. Low confidence goes to review. Quiet hours skip the call. A page flag stays in Attention now and is not sent to Jev. A failed call puts the other events in review instead of using the fixture lane. The key stays on the server.
 
+Enter an event and select **Sort my event** to test your own text. **Priority page flag** keeps that event in Attention now without calling Jev. **Show sample inbox** restores the fixture comparison. The page labels offline results as a baseline; set the key before starting the server for a live result.
+
 ```sh
 python3 demos/interruption_budget/interruption_budget.py serve
 TYPESAFE_API_KEY=... python3 demos/interruption_budget/interruption_budget.py serve

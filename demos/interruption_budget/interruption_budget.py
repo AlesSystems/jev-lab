@@ -30,6 +30,7 @@ MODEL = "jev-1.13.0"
 ENDPOINT = "https://api.typesafe.ai/v1/systemone"
 TIMEOUT_SECONDS = 30.0
 MAX_RESPONSE_BYTES = 1_000_000
+MAX_REQUEST_BYTES = 8_192
 CONFIDENCE_MIN = 0.8
 SCORE_CRITERIA = [
     "Informational. No action is needed.",
@@ -155,6 +156,10 @@ EVENTS = (
 )
 
 
+def custom_event(text: str, page: bool) -> Event:
+    return Event("custom", "custom", "page" if page else "normal", text, "digest", "digest")
+
+
 def shown_lane(raw: str, flag: str, quiet: bool) -> str:
     if flag == "page":
         return "attention_now"
@@ -163,12 +168,13 @@ def shown_lane(raw: str, flag: str, quiet: bool) -> str:
     return raw
 
 
-def inbox(quiet: bool, api_key: str | None = None, transport: Transport | None = None) -> dict[str, Any]:
+def inbox(quiet: bool, api_key: str | None = None, transport: Transport | None = None,
+          events: Sequence[Event] = EVENTS, custom: bool = False) -> dict[str, Any]:
     key = api_key.strip() if isinstance(api_key, str) else ""
     scored: dict[str, str] = {}
     error: str | None = None
-    if key and not quiet:
-        eligible = [event for event in EVENTS if event.flag != "page"]
+    eligible = [event for event in events if event.flag != "page"]
+    if key and not quiet and eligible:
         parsed, error = post_jev(
             {
                 "model": MODEL,
@@ -188,16 +194,16 @@ def inbox(quiet: bool, api_key: str | None = None, transport: Transport | None =
         else:
             engine = "unavailable"
             error = error or "invalid_response"
-    elif key:
+    elif key or not eligible:
         engine = "code_rule"
     else:
         engine = "offline_baseline"
     columns: dict[str, list[dict[str, Any]]] = {lane: [] for lane in LANES}
-    for event in EVENTS:
+    for event in events:
         baseline = shown_lane(event.baseline, event.flag, quiet)
         if event.flag == "page":
             lane = "attention_now"
-            source = "code_rule" if key else "offline_baseline"
+            source = "code_rule"
             note = "Priority flag holds this in attention now."
         elif quiet:
             lane = "digest"
@@ -208,7 +214,9 @@ def inbox(quiet: bool, api_key: str | None = None, transport: Transport | None =
             source = "unavailable"
             note = f"Jev did not return a usable reading ({error})."
         else:
-            lane = scored[event.id] if key else shown_lane(event.label, event.flag, quiet)
+            lane = scored[event.id] if key and engine == "live_jev" else shown_lane(
+                event.baseline if custom else event.label, event.flag, quiet
+            )
             source = "live_jev" if key else "offline_baseline"
             note = f"Jev: {LANE_TITLES[lane]}. Baseline: {LANE_TITLES[baseline]}." if key else f"baseline: {LANE_TITLES[baseline]}"
         columns[lane].append({
@@ -224,18 +232,26 @@ def inbox(quiet: bool, api_key: str | None = None, transport: Transport | None =
     if engine == "unavailable":
         decision = "UNAVAILABLE"
         note = f"Jev did not return a usable reading ({error}). Those events are in review. A page flag still stays in attention now."
+    elif not eligible:
+        decision = "PAGE FLAG"
+        note = "Priority page flag is a code rule, so Jev was not called."
     elif quiet:
         decision = "QUIET"
-        note = "Quiet hours are a code rule, so Jev was not called. A page flag still stays in attention now." if key else "No API key is set. Event type is the baseline, and the scenario lane is a fixture."
-    elif splits:
-        decision = "SPLIT"
-        note = "Jev scored each event. A page flag is still decided in code." if key else "No API key is set. Event type is the baseline, and the scenario lane is a fixture."
+        note = "Quiet hours are a code rule, so Jev was not called. A page flag still stays in attention now." if key else "No API key is set. Quiet hours use the baseline."
     else:
-        decision = "CLEAR"
-        note = "Jev scored each event. A page flag is still decided in code." if key else "No API key is set. Event type is the baseline, and the scenario lane is a fixture."
+        decision = "SPLIT" if splits else "CLEAR"
+        if engine == "live_jev":
+            note = "Jev scored each event. A page flag is still decided in code."
+        elif key:
+            note = "A page flag is decided in code."
+        elif custom:
+            note = "No API key is set. Showing the baseline."
+        else:
+            note = "No API key is set. Event type is the baseline, and the scenario lane is a fixture."
     return {
         "quiet": quiet,
         "engine": engine,
+        "custom": custom,
         "decision": decision,
         "preference": PREFERENCE,
         "note": note,
@@ -249,8 +265,25 @@ def resolve_static(name: str) -> Path | None:
     return STATIC / name
 
 
-def route(method: str, path: str) -> tuple[int, dict[str, Any] | bytes, str]:
+def route(method: str, path: str, body: bytes | None = None) -> tuple[int, dict[str, Any] | bytes, str]:
     parsed = urlparse(path)
+    if method == "POST" and parsed.path == "/api/sort":
+        if body is None or len(body) > MAX_REQUEST_BYTES:
+            return 400, {"error": "invalid_input"}, "application/json"
+        try:
+            data = json.loads(body)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return 400, {"error": "invalid_json"}, "application/json"
+        if not isinstance(data, dict):
+            return 400, {"error": "invalid_input"}, "application/json"
+        text = data.get("text")
+        quiet = data.get("quiet")
+        page = data.get("page")
+        if (not isinstance(text, str) or not 1 <= len(text.strip()) <= 1_000
+                or not isinstance(quiet, bool) or not isinstance(page, bool)):
+            return 400, {"error": "invalid_input"}, "application/json"
+        return 200, inbox(quiet, api_key=api_key_from_env(),
+                          events=(custom_event(text.strip(), page),), custom=True), "application/json"
     if method != "GET":
         return 405, {"error": "method_not_allowed"}, "application/json"
     if parsed.path == "/api/inbox":
@@ -268,6 +301,19 @@ def route(method: str, path: str) -> tuple[int, dict[str, Any] | bytes, str]:
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         status, payload, content_type = route("GET", self.path)
+        self._respond(status, payload, content_type)
+
+    def do_POST(self) -> None:
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = -1
+        if length < 0 or length > MAX_REQUEST_BYTES:
+            self._respond(400, {"error": "invalid_input"}, "application/json")
+            return
+        self._respond(*route("POST", self.path, self.rfile.read(length)))
+
+    def _respond(self, status: int, payload: dict[str, Any] | bytes, content_type: str) -> None:
         raw = payload if isinstance(payload, bytes) else json.dumps(payload).encode()
         self.send_response(status)
         self.send_header("Content-Type", content_type)

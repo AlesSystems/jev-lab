@@ -28,6 +28,7 @@ MODEL = "jev-1.13.0"
 ENDPOINT = "https://api.typesafe.ai/v1/systemone"
 TIMEOUT_SECONDS = 30.0
 MAX_RESPONSE_BYTES = 1_000_000
+MAX_REQUEST_BYTES = 64_000
 CONFIDENCE_MIN = 0.8
 OPTIONS = ("supported", "contradicted", "insufficient_evidence")
 Transport = Callable[[bytes, str], bytes]
@@ -152,33 +153,32 @@ SCENARIOS: dict[str, dict[str, str]] = {
 
 
 def scenario_list() -> list[dict[str, str]]:
-    return [{"id": scenario_id, "title": scenario["title"]} for scenario_id, scenario in SCENARIOS.items()]
+    return [{"id": scenario_id, "title": scenario["title"], "claim": scenario["claim"], "evidence": EVIDENCE} for scenario_id, scenario in SCENARIOS.items()]
 
 
 def board_payload(scenario_id: str, api_key: str | None = None, transport: Transport | None = None) -> dict[str, Any]:
     scenario = SCENARIOS[scenario_id]
-    reading = baseline(scenario["claim"])
-    label = {"verdict": scenario["verdict"], "reason": scenario["reason"]}
-    page = {
-        "id": scenario_id,
-        "title": scenario["title"],
-        "claim": scenario["claim"],
-        "evidence": EVIDENCE,
-        "baseline": reading,
-        "label": label,
-    }
+    return check_payload(scenario["claim"], EVIDENCE, api_key, transport, scenario_id)
+
+
+def check_payload(claim: str, evidence: str, api_key: str | None = None, transport: Transport | None = None, scenario_id: str | None = None) -> dict[str, Any]:
+    reading = baseline(claim, evidence)
+    scenario = SCENARIOS.get(scenario_id or "")
+    page = {"id": scenario_id, "title": scenario["title"] if scenario else "Custom claim", "claim": claim, "evidence": evidence, "baseline": reading}
+    if scenario:
+        page["label"] = {"verdict": scenario["verdict"], "reason": scenario["reason"]}
     key = api_key.strip() if isinstance(api_key, str) else ""
     if not key:
         return {
             **page,
             "engine": "offline_baseline",
             "jev": None,
-            "decision": WORDS[scenario["verdict"]],
-            "split": reading["verdict"] != scenario["verdict"],
-            "note": "No API key is set. Keyword overlap is the baseline, and the scenario verdict is a fixture.",
+            "decision": WORDS[scenario["verdict"]] if scenario else "BASELINE ONLY",
+            "split": reading["verdict"] != scenario["verdict"] if scenario else False,
+            "note": "No API key is set. Keyword overlap is the baseline, and the scenario verdict is a fixture." if scenario else "No API key is set. Only keyword overlap is shown; this is not a Jev verdict.",
         }
     parsed, error = post_jev(
-        {"model": MODEL, "state": {"claim": scenario["claim"], "evidence": EVIDENCE}, "questions": verdict_question()},
+        {"model": MODEL, "state": {"claim": claim, "evidence": evidence}, "questions": verdict_question()},
         key,
         transport,
     )
@@ -213,8 +213,18 @@ def resolve_static(name: str) -> Path | None:
     return STATIC / name
 
 
-def route(method: str, path: str) -> tuple[int, dict[str, Any] | bytes, str]:
+def route(method: str, path: str, body: bytes = b"") -> tuple[int, dict[str, Any] | bytes, str]:
     parsed = urlparse(path)
+    if method == "POST" and parsed.path == "/api/check":
+        if len(body) > MAX_REQUEST_BYTES:
+            return 413, {"error": "request_too_large"}, "application/json"
+        try:
+            data = json.loads(body)
+        except (ValueError, UnicodeDecodeError):
+            return 400, {"error": "invalid_json"}, "application/json"
+        if not isinstance(data, dict) or any(not isinstance(data.get(field), str) or not data[field].strip() or len(data[field]) > limit for field, limit in (("claim", 2000), ("evidence", 12000))):
+            return 400, {"error": "Enter a claim (up to 2,000 characters) and evidence (up to 12,000 characters)."}, "application/json"
+        return 200, check_payload(data["claim"].strip(), data["evidence"].strip(), api_key=api_key_from_env()), "application/json"
     if method != "GET":
         return 405, {"error": "method_not_allowed"}, "application/json"
     if parsed.path == "/api/scenarios":
@@ -235,6 +245,22 @@ def route(method: str, path: str) -> tuple[int, dict[str, Any] | bytes, str]:
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         status, payload, content_type = route("GET", self.path)
+        self.respond(status, payload, content_type)
+
+    def do_POST(self) -> None:
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = -1
+        if not 0 < length <= MAX_REQUEST_BYTES:
+            self.respond(413 if length > MAX_REQUEST_BYTES else 400, {"error": "invalid_request_size"}, "application/json")
+            return
+        if self.headers.get_content_type() != "application/json":
+            self.respond(415, {"error": "expected_application_json"}, "application/json")
+            return
+        self.respond(*route("POST", self.path, self.rfile.read(length)))
+
+    def respond(self, status: int, payload: dict[str, Any] | bytes, content_type: str) -> None:
         raw = payload if isinstance(payload, bytes) else json.dumps(payload).encode()
         self.send_response(status)
         self.send_header("Content-Type", content_type)

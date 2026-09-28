@@ -9,10 +9,20 @@
 </head>
 <body>
   <h1>Claim check</h1>
-  <p class="lede">One evidence passage stays fixed. Swap the claim. Keyword overlap is the baseline. With an API key, Jev chooses supported, contradicted, or not enough evidence.</p>
-  <p class="decision" id="decision" aria-live="polite">Supported</p>
-  <p class="why" id="why"></p>
+  <p class="lede">Test a claim against evidence. Load an example or write your own, then run the check. Jev evaluates support; keyword overlap is shown for comparison.</p>
   <div class="choices" id="scenarios"></div>
+  <form id="check-form">
+    <label for="claim">Claim</label>
+    <textarea id="claim" name="claim" rows="2" maxlength="2000" required></textarea>
+    <label for="evidence">Evidence passage</label>
+    <textarea id="evidence" name="evidence" rows="5" maxlength="12000" required></textarea>
+    <button class="primary" id="run" type="submit">Run claim check</button>
+    <p class="lede">Uses the server’s TYPESAFE_API_KEY. Without a key, only the keyword baseline runs.</p>
+  </form>
+  <div role="status" aria-live="polite">
+    <p class="decision" id="decision">Ready</p>
+    <p class="why" id="why">Load an example or enter a claim and evidence.</p>
+  </div>
   <div class="sheet" id="sheet"></div>
   <script src="app.js"></script>
 </body>

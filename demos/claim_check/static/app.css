@@ -264,3 +264,10 @@ select {
     text-transform: uppercase;
   }
 }
+
+form { max-width: 52rem; margin: 24px 0; }
+label { display: block; font-weight: 600; margin: 16px 0 6px; }
+textarea { width: 100%; padding: 12px; border: 1px solid var(--grid); border-radius: 8px; font: inherit; color: var(--ink); background: var(--sheet); resize: vertical; }
+#run { margin-top: 16px; }
+.copy { overflow-wrap: anywhere; }
+.sheet:empty { display: none; }

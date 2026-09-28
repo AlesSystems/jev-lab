@@ -22,6 +22,38 @@ def placed(payload: dict, event_id: str) -> dict:
 
 
 class InboxTests(unittest.TestCase):
+    def test_custom_event_reaches_jev_and_page_flag_stays_in_code(self):
+        sent = []
+
+        def transport(body: bytes, _key: str) -> bytes:
+            sent.append(json.loads(body))
+            return score_body({"custom": 1.9})
+
+        event = budget.custom_event("My build is blocked by a missing approval", False)
+        page = budget.inbox(False, api_key="secret", transport=transport, events=(event,), custom=True)
+        self.assertEqual(sent[0]["state"]["events"][0]["text"], event.text)
+        self.assertEqual(placed(page, "custom")["lane"], "attention_now")
+        self.assertEqual(page["engine"], "live_jev")
+
+        sent.clear()
+        page = budget.inbox(False, api_key="secret", transport=transport,
+                            events=(budget.custom_event("Page me", True),), custom=True)
+        self.assertEqual(sent, [])
+        self.assertEqual(placed(page, "custom")["source"], "code_rule")
+        self.assertEqual(budget.inbox(False, events=(budget.custom_event("Page me", True),),
+                                      custom=True)["engine"], "code_rule")
+
+    def test_custom_route_validates_input(self):
+        for body in (b"{}", b'{"text":"","quiet":false,"page":false}',
+                     b'{"text":"Hi","quiet":"no","page":false}'):
+            status, _payload, _media = budget.route("POST", "/api/sort", body)
+            self.assertEqual(status, 400)
+        status, payload, _media = budget.route(
+            "POST", "/api/sort", b'{"text":"Custom alert","quiet":false,"page":false}'
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(placed(payload, "custom")["text"], "Custom alert")
+
     def test_lookup_and_label_disagree_on_smoke_and_checkout(self):
         page = budget.inbox(False)
         smoke = placed(page, "smoke")
