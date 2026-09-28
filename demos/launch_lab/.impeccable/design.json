@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-28T14:22:36.498071+00:00",
+  "title": "Design System: Launch Lab",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Cobalt",
+        "canonical": "#3159da"
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Cool Canvas",
+        "canonical": "#f6f7fb"
+      }
+    },
+    "shadows": [
+      {
+        "name": "metric-hover",
+        "value": "0 8px 22px #25376113",
+        "purpose": "Lift an interactive metric on hover."
+      },
+      {
+        "name": "drawer",
+        "value": "-12px 0 40px #192b4933",
+        "purpose": "Separate the signal detail drawer from the dashboard."
+      }
+    ],
+    "motion": [
+      {
+        "name": "metric-lift",
+        "value": "transform .18s ease-out, box-shadow .18s ease-out",
+        "purpose": "Small chart-card hover response."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stack-rail",
+        "value": "1000px"
+      },
+      {
+        "name": "single-column",
+        "value": "650px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single assessment action.",
+      "html": "<button class=\"ds-primary\">Ask Jev to reassess</button>",
+      "css": ".ds-primary{background:#3159da;color:#fff;border:0;border-radius:9px;padding:14px 15px;font:700 14px \"DM Sans\",sans-serif;cursor:pointer}.ds-primary:hover{background:#2448bd}.ds-primary:focus-visible{outline:3px solid #3f66e8;outline-offset:3px}"
+    },
+    {
+      "name": "Metric card",
+      "kind": "card",
+      "refersTo": "metric-card",
+      "description": "Interactive synthetic metric with a direct detail action.",
+      "html": "<button class=\"ds-metric\"><span>Payment errors</span><strong>1.1%</strong><small>View test results and notes \u2197</small></button>",
+      "css": ".ds-metric{display:grid;gap:10px;width:220px;padding:18px;text-align:left;background:#fff;border:1px solid #e1e6ef;border-radius:13px;color:#192642;cursor:pointer;transition:transform .18s ease-out,box-shadow .18s ease-out}.ds-metric strong{font:700 30px \"Space Grotesk\",sans-serif}.ds-metric:hover{transform:translateY(-2px);box-shadow:0 8px 22px #25376113}.ds-metric:focus-visible{outline:3px solid #3f66e8;outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "A calm decision desk",
+    "overview": "Quiet light workspace, deep ink text, and cobalt actions put the release evidence ahead of decoration.",
+    "keyCharacteristics": [
+      "Readable synthetic metrics",
+      "Inspectable evidence",
+      "Clear hard-rule blocks"
+    ],
+    "rules": [],
+    "dos": [
+      "Keep required checks visible beside the evidence."
+    ],
+    "donts": [
+      "Do not use reassuring comments as a substitute for a passing test."
+    ]
+  }
+}

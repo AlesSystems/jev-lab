@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7fb">
+  <title>Launch Lab · Would you ship?</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/" aria-label="Launch Lab home"><span class="brand-mark">↗</span> Launch Lab</a><span class="top-note">A synthetic release-readiness experiment</span></header>
+  <main class="shell">
+    <div class="intro"><div><h1>Would you ship this release?</h1><p>Read the signals, choose the evidence, then ask Jev what the claim actually supports.</p></div><div class="source-controls"><label for="mode">Assessment source</label><select id="mode"><option value="fixture">Offline fixture</option><option value="live">Live Jev</option></select></div></div>
+    <section class="release-switch" aria-label="Choose a fictional release"><div id="releases" class="release-tabs"></div></section>
+    <div class="main-grid"><div class="main-column">
+      <section class="hero" aria-labelledby="release-name"><div><h2 id="release-name"></h2><p id="release-summary"></p><div class="hero-meta"><span class="clock-label">Simulated time to launch</span><strong id="countdown" class="countdown">--:--:--</strong></div></div><div id="readiness" class="readiness"><span class="status-mark"></span><strong>Awaiting assessment</strong><p>Choose evidence and ask Jev.</p></div></section>
+      <section class="metrics-section"><div class="section-heading"><h2>Release signals</h2><p>Illustrative metrics · select one to inspect its tests and notes</p></div><div id="metrics" class="metrics"></div></section>
+      <section class="evidence-section"><div class="section-heading"><h2>Evidence for the assessment</h2><p id="evidence-count"></p></div><div id="evidence" class="evidence-list"></div></section>
+    </div><aside class="sidebar"><div class="aside-heading"><h2>Release checklist</h2><p>Required checks stay visible even when you exclude their cards.</p></div><div id="checklist" class="checklist"></div><div class="rule-note">A failed, flaky, or missing required check blocks the release. Jev cannot override that rule.</div><button id="assess" class="primary-button" type="button">Ask Jev to reassess <span aria-hidden="true">→</span></button><div id="feedback" role="status" aria-live="polite" class="feedback"></div><div id="assessment" class="assessment" hidden></div></aside></div>
+    <footer><span>Prepared releases and synthetic metrics. No deployment is connected.</span><span>Jev judges language; release rules run in code.</span></footer>
+  </main>
+  <div id="drawer-backdrop" class="drawer-backdrop" hidden></div><aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden><div class="drawer-head"><div><span>Signal details</span><h2 id="drawer-title"></h2></div><button id="drawer-close" class="close-button" type="button" aria-label="Close signal details">×</button></div><p id="drawer-note"></p><div id="drawer-body"></div></aside>
+</body>
+</html>
