@@ -27,6 +27,13 @@ Three shortlist ideas also have a local page. Each page shows a baseline beside 
 
 [Festival Control Room](demos/festival_control_room/README.md) is a map-based simulation. Replay volunteer reports, move crews, and change staffing to compare dispatch plans. It starts with labeled fixture judgments and supports live Jev urgency, team, and evidence judgments when `TYPESAFE_API_KEY` is set.
 
+Two evidence workbenches let you change the inputs and inspect the resulting judgments:
+
+- [Launch Lab](demos/launch_lab/README.md) asks whether you would ship one of three fictional releases. Inspect synthetic charts, choose evidence, and compare Jev's assessment with required test rules.
+- [Feedback Kitchen](demos/feedback_kitchen/README.md) matches noisy feedback to a fixed catalog of improvements. Edit comments, inspect supporting evidence, and collect improvements in a tray.
+
+Both run with Python's standard library and a browser. Offline results are labeled baselines. Set `TYPESAFE_API_KEY` in the server environment to request live Choice, Score, and Noul judgments.
+
 ## Research notes
 
 - [Where Jev fits](docs/jev-fit.md) — primitives, integration boundaries, limitations, and dated primary sources.

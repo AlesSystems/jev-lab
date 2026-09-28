@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-28T14:22:36.498071+00:00",
+  "title": "Design System: Feedback Kitchen",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Burnt Orange",
+        "canonical": "#ad3f22"
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Warm Cream",
+        "canonical": "#fcf8ef"
+      }
+    },
+    "shadows": [
+      {
+        "name": "selected-feedback",
+        "value": "0 6px 18px #553a281f",
+        "purpose": "Show the selected inbox comment."
+      }
+    ],
+    "motion": [
+      {
+        "name": "card-lift",
+        "value": "transform .18s ease-out, box-shadow .18s ease-out",
+        "purpose": "Feedback card hover; disabled for reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-workbench",
+        "value": "1050px"
+      },
+      {
+        "name": "stack-columns",
+        "value": "650px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Orange reassessment action.",
+      "html": "<button class=\"ds-primary\">Reassess</button>",
+      "css": ".ds-primary{background:#ad3f22;color:#fff;border:0;border-radius:10px;padding:12px 19px;font:700 14px \"DM Sans\",sans-serif;cursor:pointer}.ds-primary:hover{background:#913418}.ds-primary:focus-visible{outline:3px solid #a83f23;outline-offset:3px}"
+    },
+    {
+      "name": "Feedback card",
+      "kind": "card",
+      "refersTo": "feedback-card",
+      "description": "A selectable comment in the inbox.",
+      "html": "<button class=\"ds-feedback\" aria-pressed=\"true\">My shopping list disappears when I lose mobile signal.</button>",
+      "css": ".ds-feedback{width:250px;padding:16px;text-align:left;background:#f6e7cf;color:#392b25;border:1px solid #a7442a;border-radius:12px;font:400 14px/1.4 \"DM Sans\",sans-serif;cursor:pointer;box-shadow:0 6px 18px #553a281f}.ds-feedback:hover{transform:translateY(-2px)}.ds-feedback:focus-visible{outline:3px solid #a83f23;outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "A warm sorting table",
+    "overview": "A cream workbench with orange actions and rotating pale feedback cards keeps the noisy comments tangible and readable.",
+    "keyCharacteristics": [
+      "Three-column progression",
+      "Expressive serif headings",
+      "Visible evidence trail"
+    ],
+    "rules": [],
+    "dos": [
+      "Keep matching and support visibly distinct."
+    ],
+    "donts": [
+      "Do not treat inbox card tint as a verdict."
+    ]
+  }
+}
