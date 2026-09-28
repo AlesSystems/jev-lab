@@ -19,6 +19,12 @@ Recommended first experiment: [Repro Coach](docs/first-demo-repro-coach.md), whi
 
 See each demo's linked documentation for implementation and validation status. No live Jev results have been recorded yet.
 
+Three shortlist ideas also have a local page. Each page shows a baseline beside a fixture label and does not call Jev.
+
+- [Field match](demos/field_matchmaker/README.md)
+- [Claim check](demos/claim_check/README.md)
+- [Interruption budget](demos/interruption_budget/README.md)
+
 ## Research notes
 
 - [Where Jev fits](docs/jev-fit.md) — primitives, integration boundaries, limitations, and dated primary sources.

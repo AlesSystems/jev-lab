@@ -60,7 +60,7 @@ Each experiment uses the shared [evaluation protocol](evaluation.md). The accept
 - **Baseline:** keyword overlap plus manual review.
 - **Useful result:** on 20 held-out pairs, flag all five planted unsupported/contradicted claims and automatically clear at least 10 of the 15 supported claims.
 - **Edge to expose:** a PR description is evidence of what was claimed, not proof of runtime behavior. Passing this check does not validate code or performance.
-- **Keep it small:** manually paired text; no repository crawling, automatic release publication, or factual web search.
+- **Keep it small:** manually paired text; no repository crawling, automatic release publication, or factual web search. The local page is [Claim check](../demos/claim_check/README.md).
 
 **Transfer:** product documentation and internal release checks. Adapted from the vendor's [citation-checking pattern](https://docs.typesafe.ai/cookbooks/citation_check), with release communication as the application.
 
@@ -75,7 +75,7 @@ Each experiment uses the shared [evaluation protocol](evaluation.md). The accept
 - **Baseline:** an alias dictionary and normalized exact header matching.
 - **Useful result:** compare 20 held-out columns; aim for at least four correct mappings missed by aliases, no more than one incorrect confident suggestion, and zero silently accepted conflicts.
 - **Edge to expose:** several independent choices can select the same target. Jev does not enforce a globally valid schema mapping.
-- **Keep it small:** a preview table for one synthetic CSV, with no actual import or customer records.
+- **Keep it small:** a preview table for one synthetic CSV, with no actual import or customer records. The local page is [Field match](../demos/field_matchmaker/README.md).
 
 **Transfer:** import wizards and migration tools. This tests semantic matching; CSV parsing stays deterministic.
 
@@ -137,7 +137,7 @@ Each experiment uses the shared [evaluation protocol](evaluation.md). The accept
 - **Baseline:** event-type priority lookup.
 - **Useful result:** on 20 held-out events, miss none of five important events, put at least 8 of 10 routine events in the digest, and report how many of the five ambiguous events need review.
 - **Edge to expose:** dramatic wording is not business impact. This demo must not suppress real paging, security, or operational alerts.
-- **Keep it small:** a simulated inbox with three sections; no push notifications or scheduler.
+- **Keep it small:** a simulated inbox with three sections; no push notifications or scheduler. The local page is [Interruption budget](../demos/interruption_budget/README.md).
 
 **Transfer:** SaaS notification preferences and personal work queues. Add a real digest schedule only after labeling performance is useful.
 
