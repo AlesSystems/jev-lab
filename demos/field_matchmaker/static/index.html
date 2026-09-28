@@ -9,13 +9,20 @@
 </head>
 <body>
   <h1>Field match</h1>
-  <p class="lede">Match one synthetic file to the five fields this app accepts. The alias list is the baseline. With an API key, Jev suggests a field for each column.</p>
-  <p class="decision" id="decision" aria-live="polite">Clear</p>
+  <p class="lede">Paste a CSV and match its columns to the five fields this app accepts. The alias list is the baseline. With an API key, Jev suggests a field for each column.</p>
+  <p class="decision" id="decision" aria-live="polite">Ready</p>
   <p class="why" id="why"></p>
   <div class="choices" id="scenarios"></div>
+  <form id="csv-form">
+    <label for="csv-input">CSV with headers and sample rows</label>
+    <p id="csv-help">Up to 10 columns, 20 rows and 12000 characters. Jev sees the headers and first 3 data rows. Use synthetic data when trying the demo.</p>
+    <textarea id="csv-input" rows="7" maxlength="12000" required aria-describedby="csv-help" spellcheck="false"></textarea>
+    <button class="primary" id="suggest" type="submit">Suggest mapping</button>
+  </form>
+  <p id="engine" role="status"></p>
   <div class="sheet" id="sheet"></div>
   <div class="rule">
-    <button class="primary" id="lock" type="button">Lock mapping</button>
+    <button class="primary" id="lock" type="button" disabled>Lock mapping</button>
     <p class="why" id="lock-note"></p>
   </div>
   <section class="preview" id="preview" hidden>

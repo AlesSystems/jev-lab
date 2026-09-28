@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import io
 import json
 import math
 import os
@@ -32,6 +34,8 @@ MODEL = "jev-1.13.0"
 ENDPOINT = "https://api.typesafe.ai/v1/systemone"
 TIMEOUT_SECONDS = 30.0
 MAX_RESPONSE_BYTES = 1_000_000
+MAX_REQUEST_BYTES = 64_000
+MAX_CSV_CHARS = 12_000
 CONFIDENCE_MIN = 0.8
 CRITERIA = {
     "company_name": "The organization's name.",
@@ -142,7 +146,7 @@ ALIASES: dict[str, frozenset[str]] = {
 @dataclass(frozen=True)
 class Column:
     header: str
-    samples: tuple[str, str, str]
+    samples: tuple[str, ...]
     baseline: str | None
     label: str | None
 
@@ -166,7 +170,7 @@ def baseline_target(header: str) -> str | None:
     return None
 
 
-def _column(header: str, samples: tuple[str, str, str], label: str | None) -> Column:
+def _column(header: str, samples: tuple[str, ...], label: str | None) -> Column:
     return Column(header, samples, baseline_target(header), label)
 
 
@@ -205,24 +209,55 @@ SCENARIOS: dict[str, Scenario] = {
 }
 
 
+def parse_csv(value: object) -> Scenario:
+    if not isinstance(value, str) or not value.strip() or len(value) > MAX_CSV_CHARS:
+        raise ValueError("Enter a CSV of 1 to 12000 characters.")
+    try:
+        rows = list(csv.reader(io.StringIO(value), strict=True))
+    except csv.Error as error:
+        raise ValueError("Invalid CSV quoting.") from error
+    if not 2 <= len(rows) <= 21:
+        raise ValueError("Include a header and 1 to 20 data rows.")
+    headers = [header.strip() for header in rows[0]]
+    if not 1 <= len(headers) <= 10 or any(not header for header in headers) or len(set(headers)) != len(headers):
+        raise ValueError("Use 1 to 10 unique, nonempty column headers.")
+    if any(len(row) != len(headers) for row in rows[1:]):
+        raise ValueError("Every row must have the same number of columns as the header.")
+    if any(len(cell) > 500 for row in rows for cell in row):
+        raise ValueError("Each header or cell must be at most 500 characters.")
+    return Scenario("custom", "Your CSV", tuple(
+        _column(header, tuple(row[index] for row in rows[1:4]), None)
+        for index, header in enumerate(headers)
+    ))
+
+
+def fixture_csv(scenario: Scenario) -> str:
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(column.header for column in scenario.columns)
+    writer.writerows(zip(*(column.samples for column in scenario.columns)))
+    return output.getvalue()
+
+
 def scenario_list() -> list[dict[str, str]]:
     return [{"id": scenario.id, "title": scenario.title} for scenario in SCENARIOS.values()]
 
 
-def board_payload(scenario_id: str, api_key: str | None = None, transport: Transport | None = None) -> dict[str, Any]:
-    scenario = SCENARIOS[scenario_id]
+def board_payload(scenario_id: str | Scenario, api_key: str | None = None, transport: Transport | None = None) -> dict[str, Any]:
+    scenario = SCENARIOS[scenario_id] if isinstance(scenario_id, str) else scenario_id
     columns = [asdict(column) for column in scenario.columns]
     page = {
         "id": scenario.id,
         "title": scenario.title,
         "targets": [{"id": target_id, "label": label} for target_id, label in TARGETS],
         "columns": columns,
+        "has_labels": scenario.id != "custom",
     }
     key = api_key.strip() if isinstance(api_key, str) else ""
     if not key:
         for column in columns:
             column["jev"] = None
-        return {**page, "engine": "offline_baseline", "note": "No API key is set. The alias list is the baseline, and the scenario label is a fixture."}
+        return {**page, "engine": "offline_baseline", "note": "No API key is set. Only alias matches are shown; no Jev suggestion was made."}
     parsed, error = post_jev(
         {"model": MODEL, "state": {"targets": page["targets"]}, "questions": column_questions(scenario.columns)},
         key,
@@ -243,8 +278,8 @@ def board_payload(scenario_id: str, api_key: str | None = None, transport: Trans
     return {**page, "engine": "live_jev", "note": "Jev suggested a field where confidence is at least 0.80. Lower confidence stays unmapped. Two columns still cannot lock the same field."}
 
 
-def assess(scenario_id: str, choices: object) -> dict[str, Any]:
-    scenario = SCENARIOS[scenario_id]
+def assess(scenario_id: str | Scenario, choices: object) -> dict[str, Any]:
+    scenario = SCENARIOS[scenario_id] if isinstance(scenario_id, str) else scenario_id
     parsed = _choices(scenario, choices)
     picked = [target_id for _header, target_id in parsed]
     conflicts = tuple(sorted(target_id for target_id, count in Counter(target for target in picked if target).items() if count > 1))
@@ -297,24 +332,37 @@ def route(method: str, path: str, body: bytes | None = None) -> tuple[int, dict[
     parsed = urlparse(path)
     if method == "GET" and parsed.path == "/api/scenarios":
         return 200, {"scenarios": scenario_list()}, "application/json"
+    if method == "GET" and parsed.path == "/api/fixture":
+        scenario_id = (parse_qs(parsed.query).get("id") or [""])[0]
+        if scenario_id not in SCENARIOS:
+            return 404, {"error": "unknown_scenario"}, "application/json"
+        return 200, {"csv": fixture_csv(SCENARIOS[scenario_id])}, "application/json"
     if method == "GET" and parsed.path == "/api/board":
         scenario_id = (parse_qs(parsed.query).get("id") or [""])[0]
         try:
             return 200, board_payload(scenario_id, api_key=api_key_from_env()), "application/json"
         except KeyError:
             return 404, {"error": "unknown_scenario"}, "application/json"
-    if method == "POST" and parsed.path == "/api/preview":
+    if method == "POST" and parsed.path in {"/api/preview", "/api/board"}:
+        if body is not None and len(body) > MAX_REQUEST_BYTES:
+            return 413, {"error": "request_too_large"}, "application/json"
         try:
             payload = json.loads(body or b"")
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, UnicodeDecodeError):
             return 400, {"error": "invalid_json"}, "application/json"
         if not isinstance(payload, Mapping):
             return 400, {"error": "invalid_json"}, "application/json"
-        raw_id = payload.get("scenario_id")
-        if not isinstance(raw_id, str) or raw_id not in SCENARIOS:
-            return 404, {"error": "unknown_scenario"}, "application/json"
         try:
-            return 200, assess(raw_id, payload.get("choices")), "application/json"
+            if "csv" in payload:
+                scenario = parse_csv(payload["csv"])
+            else:
+                raw_id = payload.get("scenario_id")
+                if not isinstance(raw_id, str) or raw_id not in SCENARIOS:
+                    return 404, {"error": "unknown_scenario"}, "application/json"
+                scenario = SCENARIOS[raw_id]
+            if parsed.path == "/api/board":
+                return 200, board_payload(scenario, api_key=api_key_from_env()), "application/json"
+            return 200, assess(scenario, payload.get("choices")), "application/json"
         except (TypeError, ValueError) as error:
             return 400, {"error": str(error)}, "application/json"
     if method == "GET":
@@ -331,7 +379,14 @@ class Handler(BaseHTTPRequestHandler):
         self._respond(*route("GET", self.path))
 
     def do_POST(self) -> None:
-        length = int(self.headers.get("Content-Length", "0") or "0")
+        try:
+            length = int(self.headers.get("Content-Length", "0") or "0")
+        except ValueError:
+            self._respond(400, {"error": "invalid_content_length"}, "application/json")
+            return
+        if not 0 <= length <= MAX_REQUEST_BYTES:
+            self._respond(413, {"error": "request_too_large"}, "application/json")
+            return
         self._respond(*route("POST", self.path, self.rfile.read(length)))
 
     def _respond(self, status: int, payload: dict[str, Any] | bytes, content_type: str) -> None:
