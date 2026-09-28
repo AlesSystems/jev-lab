@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-28T12:13:09.527458+00:00",
+  "title": "Design System: Festival Control Room",
+  "extensions": {
+    "motion": [
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "Suppress decorative transitions when the user requests reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stack",
+        "value": "850px"
+      },
+      {
+        "name": "compact",
+        "value": "520px"
+      }
+    ],
+    "shadows": [
+      {
+        "name": "crew-swatch-inset",
+        "value": "inset 0 0 0 3px #d9eadd",
+        "purpose": "Light ring inside crew roster swatches."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Play Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Persistent replay action.",
+      "html": "<button class=\"ds-play\">Play</button>",
+      "css": ".ds-play{min-height:44px;border:1px solid #28513c;border-radius:6px;padding:0 13px;background:#28513c;color:#fff;font:750 12px Inter,system-ui,sans-serif}.ds-play:hover{background:#37694e}.ds-play:focus-visible{outline:3px solid #c2573c;outline-offset:3px}"
+    },
+    {
+      "name": "Secondary Control",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Reset and other supporting actions.",
+      "html": "<button class=\"ds-button\">Reset</button>",
+      "css": ".ds-button{min-height:44px;border:1px solid #bdcbbd;border-radius:6px;padding:0 13px;background:#fffefa;color:#234031;font:650 12px Inter,system-ui,sans-serif}.ds-button:hover{background:#edf3ea}.ds-button:focus-visible{outline:3px solid #c2573c;outline-offset:3px}"
+    },
+    {
+      "name": "Source Badge",
+      "kind": "chip",
+      "refersTo": "source-badge",
+      "description": "Labels fixture or live judgment source.",
+      "html": "<span class=\"ds-source\">Fixture</span>",
+      "css": ".ds-source{display:inline-block;border-radius:5px;padding:8px 10px;background:#e8f1e5;color:#4b7055;font:12px Inter,system-ui,sans-serif}"
+    },
+    {
+      "name": "Incident Marker",
+      "kind": "custom",
+      "description": "Map incident state.",
+      "html": "<svg viewBox=\"0 0 44 44\" width=\"44\" height=\"44\"><circle class=\"ds-pin\" cx=\"22\" cy=\"22\" r=\"14\"/><circle class=\"ds-core\" cx=\"22\" cy=\"22\" r=\"4\"/></svg>",
+      "css": ".ds-pin{fill:#c95038;stroke:#fff9f3;stroke-width:3}.ds-core{fill:#fff9f3}"
+    },
+    {
+      "name": "Crew Marker",
+      "kind": "custom",
+      "description": "Map crew identity and keyboard focus.",
+      "html": "<svg viewBox=\"0 0 44 44\" width=\"44\" height=\"44\"><circle class=\"ds-crew\" cx=\"22\" cy=\"22\" r=\"14\"/></svg>",
+      "css": ".ds-crew{fill:#2c674c;stroke:#fffefa;stroke-width:3}.ds-crew:focus-visible{stroke:#c95038;stroke-width:5}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Venue Desk",
+    "overview": "A light, functional site plan is the main workspace. Warm paper holds controls and report evidence; green ground holds the venue.",
+    "keyCharacteristics": [
+      "clear site geometry",
+      "compact evidence",
+      "one persistent timeline",
+      "direct manipulation of crew starting positions"
+    ],
+    "rules": [
+      {
+        "name": "The State Color Rule",
+        "body": "Keep incident red distinct from crew specialty colors and from the green venue ground; color always has a status or identity role.",
+        "section": "colors"
+      },
+      {
+        "name": "The Map Label Rule",
+        "body": "Keep place names readable on the map at every breakpoint; do not move the drag hint into the SVG where scaling makes it too small.",
+        "section": "typography"
+      },
+      {
+        "name": "The Replay Rule",
+        "body": "The map and timeline stay in view while staffing changes rerun the same reports. The rail explains selected incidents without replacing the map.",
+        "section": "layout"
+      }
+    ],
+    "dos": [
+      "Keep the map dominant and the report evidence visible in the rail.",
+      "Retain labeled controls, keyboard focus, and the 44px control target floor.",
+      "Show crew starting positions separately from their moving replay positions."
+    ],
+    "donts": [
+      "Imply straight-line travel is a real venue route.",
+      "Replace the server-produced dispatch schedule with browser-calculated assignments."
+    ]
+  }
+}
