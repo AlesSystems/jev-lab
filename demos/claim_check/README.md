@@ -11,6 +11,8 @@ TYPESAFE_API_KEY=... python3 demos/claim_check/claim_check.py serve
 
 Open http://127.0.0.1:8766
 
+Replace `...` with your real key. The terminal and page show whether **this server process** received it, without displaying the key. If the page says the key is missing, stop any older server on port 8766 and start the command again in the terminal where the key is set. A key set in another terminal is not inherited.
+
 ```sh
 python3 -m unittest demos/claim_check/test_claim_check.py
 ```
