@@ -201,7 +201,7 @@ select {
 }
 
 
-.strip p { margin: 0; }
+.strip p { margin: 0; overflow-wrap: anywhere; }
 
 .strip .meta {
   margin-top: 8px;
