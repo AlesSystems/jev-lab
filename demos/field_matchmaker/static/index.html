@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Field match</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&family=Barlow:wght@400;600&display=swap">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <h1>Field match</h1>
+  <p class="lede">Match one synthetic file to the five fields this app accepts. The alias list is the baseline. The scenario label is a fixture, not a Jev result.</p>
+  <p class="decision" id="decision" aria-live="polite">Clear</p>
+  <p class="why" id="why"></p>
+  <div class="choices" id="scenarios"></div>
+  <div class="sheet" id="sheet"></div>
+  <div class="rule">
+    <button class="primary" id="lock" type="button">Lock mapping</button>
+    <p class="why" id="lock-note"></p>
+  </div>
+  <section class="preview" id="preview" hidden>
+    <h2>Locked preview</h2>
+    <div class="sheet" id="preview-sheet"></div>
+  </section>
+  <script src="app.js"></script>
+</body>
+</html>
