@@ -19,7 +19,7 @@ Recommended first experiment: [Repro Coach](docs/first-demo-repro-coach.md), whi
 
 See each demo's linked documentation for implementation and validation status. No live Jev results have been recorded yet.
 
-Three shortlist ideas also have a local page. Each page shows a baseline beside a fixture label and does not call Jev.
+Three shortlist ideas also have a local page. Each page shows a baseline beside a fixture label. Set `TYPESAFE_API_KEY` before starting the page to ask Jev; without the key, the page stays on the baseline.
 
 - [Field match](demos/field_matchmaker/README.md)
 - [Claim check](demos/claim_check/README.md)

@@ -216,7 +216,7 @@ select {
 
 .pair {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
 }
 
 .pair h2 {

@@ -1,6 +1,5 @@
 const decision = document.querySelector("#decision");
 const why = document.querySelector("#why");
-const preference = document.querySelector("#preference");
 const quiet = document.querySelector("#quiet");
 const sheet = document.querySelector("#sheet");
 let lastWord = "";
@@ -18,7 +17,6 @@ function word(next) {
 
 function render(inbox) {
   word(inbox.decision);
-  preference.textContent = inbox.preference;
   why.textContent = inbox.note;
   quiet.setAttribute("aria-pressed", String(inbox.quiet));
   sheet.innerHTML = `<div class="bays">${inbox.columns.map((column) => `

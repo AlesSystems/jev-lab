@@ -33,15 +33,29 @@ function fieldName(id) {
   return board.targets.find((target) => target.id === id)?.label || id;
 }
 
+function selectedTarget(column) {
+  if (board.engine === "live_jev" && column.jev?.status === "suggested") return column.jev.target || "";
+  if (board.engine === "live_jev" || board.engine === "unavailable") return "";
+  return column.label || "";
+}
+
+function jevName(column) {
+  if (!column.jev) return "No API key";
+  if (column.jev.status === "unavailable") return "Unavailable";
+  if (column.jev.status === "review") return `Review ${Number(column.jev.confidence).toFixed(2)}`;
+  return `${fieldName(column.jev.target)} ${Number(column.jev.confidence).toFixed(2)}`;
+}
+
 function renderBoard() {
   const head = board.targets.map((target) => `<option value="${target.id}">${target.label}</option>`).join("");
   const rows = board.columns.map((column) => {
     const split = column.baseline !== column.label;
-    const selected = column.label || "";
+    const selected = selectedTarget(column);
     return `<tr class="${split ? "split" : ""}">
       <td data-label="Header">${column.header}</td>
       <td data-label="Samples" class="samples">${column.samples.join(", ")}</td>
       <td data-label="Baseline">${fieldName(column.baseline)}</td>
+      <td data-label="Jev">${jevName(column)}</td>
       <td data-label="Scenario label" class="${split ? "mark" : ""}">${fieldName(column.label)}</td>
       <td data-label="Pick">
         <select data-header="${column.header}" aria-label="Pick for ${column.header}">
@@ -52,7 +66,7 @@ function renderBoard() {
     </tr>`;
   }).join("");
   sheet.innerHTML = `<table>
-    <thead><tr><th>Header</th><th>Samples</th><th>Baseline</th><th>Scenario label</th><th>Pick</th></tr></thead>
+    <thead><tr><th>Header</th><th>Samples</th><th>Baseline</th><th>Jev</th><th>Scenario label</th><th>Pick</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
   sheet.querySelectorAll("select").forEach((select) => select.addEventListener("change", () => { preview.hidden = true; refresh(); }));

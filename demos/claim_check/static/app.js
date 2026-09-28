@@ -15,11 +15,36 @@ function word(next) {
   decision.textContent = next;
 }
 
+function reading(verdict) {
+  return verdict.replaceAll("_", " ");
+}
+
+function jevCopy(board) {
+  if (board.engine === "live_jev" && board.jev?.status === "suggested") {
+    return `Jev says ${reading(board.jev.verdict)} (${Number(board.jev.confidence).toFixed(2)}). Baseline says ${reading(board.baseline.verdict)}.`;
+  }
+  if (board.engine === "live_jev") {
+    return `Jev confidence is ${Number(board.jev.confidence).toFixed(2)}, below 0.80, so this stays in review.`;
+  }
+  return board.note;
+}
+
+function jevSection(board) {
+  if (!board.jev) {
+    const title = board.engine === "unavailable" ? "Unavailable" : "No API key";
+    return `<section><h2>Jev</h2><p class="verdict">${title}</p><p class="copy">${board.note}</p></section>`;
+  }
+  const verdict = board.jev.verdict ? reading(board.jev.verdict) : "Review";
+  return `<section><h2>Jev</h2><p class="verdict">${verdict}</p><p class="copy">${jevCopy(board)}</p></section>`;
+}
+
 function render(board) {
   word(board.decision);
-  why.textContent = board.split
-    ? `${board.label.reason} Baseline still says ${board.baseline.verdict.replaceAll("_", " ")}.`
-    : board.label.reason;
+  why.textContent = board.engine === "offline_baseline" && board.split
+    ? `${board.label.reason} Baseline still says ${reading(board.baseline.verdict)}.`
+    : board.engine === "offline_baseline"
+      ? board.label.reason
+      : jevCopy(board);
   sheet.innerHTML = `<div class="pair">
     <section>
       <h2>Claim</h2>
@@ -29,13 +54,14 @@ function render(board) {
     </section>
     <section class="${board.split ? "cell split" : ""}">
       <h2>Baseline</h2>
-      <p class="verdict">${board.baseline.verdict.replaceAll("_", " ")}</p>
+      <p class="verdict">${reading(board.baseline.verdict)}</p>
       <p class="copy">${board.baseline.reason}</p>
     </section>
+    ${jevSection(board)}
     <section>
       <h2>Scenario label</h2>
-      <p class="verdict">${board.label.verdict.replaceAll("_", " ")}</p>
-      <p class="copy">${board.note}</p>
+      <p class="verdict">${reading(board.label.verdict)}</p>
+      <p class="copy">${board.label.reason}</p>
     </section>
   </div>`;
 }
