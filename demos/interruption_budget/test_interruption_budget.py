@@ -40,6 +40,8 @@ class InboxTests(unittest.TestCase):
                             events=(budget.custom_event("Page me", True),), custom=True)
         self.assertEqual(sent, [])
         self.assertEqual(placed(page, "custom")["source"], "code_rule")
+        self.assertEqual(budget.inbox(False, events=(budget.custom_event("Page me", True),),
+                                      custom=True)["engine"], "code_rule")
 
     def test_custom_route_validates_input(self):
         for body in (b"{}", b'{"text":"","quiet":false,"page":false}',
