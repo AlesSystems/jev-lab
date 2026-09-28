@@ -1,7 +1,10 @@
 import importlib.util
 import json
 import sys
+import threading
 import unittest
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 path = Path(__file__).with_name("festival_control_room.py")
@@ -203,6 +206,134 @@ class ControlRoomTests(unittest.TestCase):
         by_id = {a["report_id"]: a for a in assignments}
         self.assertLess(by_id["high"]["dispatch_at"], by_id["low"]["dispatch_at"])
         self.assertLess(by_id["high"]["dispatch_at"], by_id["future"]["dispatch_at"])
+
+    def test_same_plan_replays_and_repositioning_shortens_real_travel(self):
+        first = room.make_plan("fixture", input_crews())
+        self.assertEqual(first, room.make_plan("fixture", input_crews()))
+        moved = input_crews()
+        moved[0].update(x=180, y=145)
+        shorter = room.make_plan("fixture", moved)
+        original = next(
+            a for a in first["assignments"] if a["report_id"] == "medical_north"
+        )
+        closer = next(
+            a for a in shorter["assignments"] if a["report_id"] == "medical_north"
+        )
+        self.assertEqual(closer["arrive_at"] - closer["dispatch_at"], 10)
+        self.assertGreater(original["arrive_at"], closer["arrive_at"])
+        self.assertEqual(first["judgments"], shorter["judgments"])
+
+    def test_full_live_response_rejects_nonfinite_bool_and_huge_numbers(self):
+        answers = {}
+        for report in room.REPORTS:
+            rid = report["id"]
+            answers[rid + "_urgency"] = {
+                "type": "score",
+                "score": 2.5,
+                "confidence": 0.9,
+                "probabilities": {"0": 0, "1": 0, "2": 0.5, "3": 0.5},
+            }
+            answers[rid + "_team"] = {
+                "type": "choice",
+                "choice": "medical",
+                "confidence": 0.9,
+                "probabilities": {
+                    "medical": 1,
+                    "security": 0,
+                    "welfare": 0,
+                    "operations": 0,
+                    "none": 0,
+                },
+            }
+            answers[rid + "_evidence"] = {"type": "noul", "noul": 0.9}
+        for invalid in (float("nan"), float("inf"), True, 10**1000):
+            with self.subTest(value=str(invalid)[:20]):
+                answers["medical_north_urgency"]["score"] = invalid
+                with self.assertRaises(room.ResponseError):
+                    room.parse_jev({"model": "jev-1.13.0", "answers": answers})
+        room.LIVE_CACHE = None
+        with self.assertRaises(room.ResponseError):
+            room.live_judgments(
+                "secret", lambda _body, _key: (_ for _ in ()).throw(TimeoutError())
+            )
+        self.assertIsNone(room.LIVE_CACHE)
+
+    def test_live_choice_and_score_must_agree_with_distributions(self):
+        answers = {}
+        for report in room.REPORTS:
+            rid = report["id"]
+            answers[rid + "_urgency"] = {
+                "type": "score",
+                "score": 2.5,
+                "confidence": 0.9,
+                "probabilities": {"0": 0, "1": 0, "2": 0.5, "3": 0.5},
+            }
+            answers[rid + "_team"] = {
+                "type": "choice",
+                "choice": "medical",
+                "confidence": 0.9,
+                "probabilities": {
+                    "medical": 1,
+                    "security": 0,
+                    "welfare": 0,
+                    "operations": 0,
+                    "none": 0,
+                },
+            }
+            answers[rid + "_evidence"] = {"type": "noul", "noul": 0.9}
+        payload = {"model": "jev-1.13.0", "answers": answers}
+        self.assertEqual(room.parse_jev(payload)[1]["medical_north"]["team"], "medical")
+        answers["medical_north_team"]["probabilities"] = {
+            "medical": 0,
+            "security": 1,
+            "welfare": 0,
+            "operations": 0,
+            "none": 0,
+        }
+        with self.assertRaises(room.ResponseError):
+            room.parse_jev(payload)
+        answers["medical_north_team"]["probabilities"] = {
+            "medical": 1,
+            "security": 0,
+            "welfare": 0,
+            "operations": 0,
+            "none": 0,
+        }
+        answers["medical_north_urgency"].update(
+            score=3, probabilities={"0": 1, "1": 0, "2": 0, "3": 0}
+        )
+        with self.assertRaises(room.ResponseError):
+            room.parse_jev(payload)
+
+    def test_http_handler_rejects_cross_origin_and_plain_text(self):
+        server = room.ThreadingHTTPServer(("127.0.0.1", 0), room.Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            url = f"http://127.0.0.1:{server.server_port}/api/plan"
+            data = json.dumps({"mode": "fixture", "crews": input_crews()}).encode()
+            good = urllib.request.Request(
+                url, data, {"Content-Type": "application/json"}
+            )
+            with urllib.request.urlopen(good, timeout=3) as response:
+                self.assertEqual(response.status, 200)
+                self.assertEqual(json.load(response)["mode"], "fixture")
+            for headers in (
+                {"Content-Type": "text/plain"},
+                {"Content-Type": "application/json", "Origin": "https://other.example"},
+            ):
+                with (
+                    self.subTest(headers=headers),
+                    self.assertRaises(urllib.error.HTTPError) as caught,
+                ):
+                    urllib.request.urlopen(
+                        urllib.request.Request(url, data, headers), timeout=3
+                    )
+                self.assertEqual(caught.exception.code, 400)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=3)
 
     def test_scenario_contract(self):
         status, body, _ = room.route("GET", "/api/scenario")

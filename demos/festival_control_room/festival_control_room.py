@@ -420,8 +420,17 @@ def parse_jev(
             raise ResponseError("Invalid Jev team.")
         validate_distribution(score.get("probabilities"), ("0", "1", "2", "3"))
         validate_distribution(choice.get("probabilities"), (*SPECIALTIES, "none"))
+        urgency = number(score.get("score"), 0, 3)
+        levels = score["probabilities"]
+        expected_score = sum(
+            int(level) * weight for level, weight in levels.items()
+        ) / sum(levels.values())
+        if abs(urgency - expected_score) > 0.02:
+            raise ResponseError("Jev score contradicts its distribution.")
+        if choice["probabilities"][team] + 1e-6 < max(choice["probabilities"].values()):
+            raise ResponseError("Jev team contradicts its distribution.")
         result[rid] = {
-            "urgency": number(score.get("score"), 0, 3),
+            "urgency": urgency,
             "urgency_confidence": number(score.get("confidence"), 0, 1),
             "team": team,
             "team_confidence": number(choice.get("confidence"), 0, 1),
