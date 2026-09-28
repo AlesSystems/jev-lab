@@ -94,7 +94,7 @@ CREWS: tuple[Crew, ...] = (
         "specialty": "medical",
         "x": 750,
         "y": 330,
-        "enabled": True,
+        "enabled": False,
     },
     {
         "id": "sec_a",
@@ -146,14 +146,14 @@ REPORTS: tuple[Report, ...] = (
     {
         "id": "medical_east",
         "at": 52,
-        "title": "Breathing difficulty",
-        "text": "Guest at East lawn is struggling to breathe; companion requests medical help.",
+        "title": "Guest needs medical support",
+        "text": "A volunteer is guiding a guest who feels faint across East lawn toward the concourse and requests medical support.",
         "zone": "east",
         "x": 780,
         "y": 175,
-        "end_x": 750,
-        "end_y": 195,
-        "move_until": 120,
+        "end_x": 680,
+        "end_y": 260,
+        "move_until": 160,
         "service_seconds": 210,
     },
     {

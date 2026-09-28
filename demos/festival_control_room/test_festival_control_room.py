@@ -39,6 +39,20 @@ class ControlRoomTests(unittest.TestCase):
             )
         )
 
+    def test_default_east_medical_report_moves_while_waiting_for_crew(self):
+        default = room.make_plan("fixture", input_crews())
+        report = next(r for r in default["reports"] if r["id"] == "medical_east")
+        assignment = next(a for a in default["assignments"] if a["report_id"] == report["id"])
+        self.assertGreater(assignment["dispatch_at"], report["move_until"])
+        self.assertNotEqual(room.position(report, 70), room.position(report, 100))
+        staffed = input_crews()
+        next(c for c in staffed if c["id"] == "med_b")["enabled"] = True
+        enabled = room.make_plan("fixture", staffed)
+        prompt = next(a for a in enabled["assignments"] if a["report_id"] == report["id"])
+        self.assertEqual(prompt["dispatch_at"], report["at"])
+        self.assertLess(prompt["arrive_at"], assignment["arrive_at"])
+        self.assertEqual(default["judgments"], enabled["judgments"])
+
     def test_staffing_changes_schedule_not_judgments(self):
         original = room.make_plan("fixture", input_crews())
         crews = [{**c, "enabled": False} for c in input_crews()]
