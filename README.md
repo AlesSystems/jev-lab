@@ -25,6 +25,8 @@ Three shortlist ideas also have a local page. Each page shows a baseline beside 
 - [Claim check](demos/claim_check/README.md)
 - [Interruption budget](demos/interruption_budget/README.md)
 
+[Festival Control Room](demos/festival_control_room/README.md) is a map-based simulation. Replay volunteer reports, move crews, and change staffing to compare dispatch plans. It starts with labeled fixture judgments and supports live Jev urgency, team, and evidence judgments when `TYPESAFE_API_KEY` is set.
+
 ## Research notes
 
 - [Where Jev fits](docs/jev-fit.md) — primitives, integration boundaries, limitations, and dated primary sources.
