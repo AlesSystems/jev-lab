@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f7f2" />
+    <title>Northline Festival · Control room</title>
+    <link rel="stylesheet" href="/app.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="identity">
+          <span class="mark" aria-hidden="true"></span>
+          <div>
+            <strong>Northline Festival</strong
+            ><span>Control room · simulation</span>
+          </div>
+        </div>
+        <div class="top-actions">
+          <span id="source-badge" class="source-badge"
+            >Synthetic · fixture judgments</span
+          ><button id="source-button" class="button subtle" type="button">
+            Use live Jev
+          </button>
+        </div>
+      </header>
+      <main class="workspace">
+        <section class="map-panel" aria-label="Festival venue map">
+          <div class="map-top">
+            <div>
+              <h1>Venue map</h1>
+              <p>Drag crew starting positions to compare dispatch plans.</p>
+            </div>
+            <div class="map-meta">
+              N
+              <svg class="north-arrow" viewBox="0 0 16 20" aria-hidden="true">
+                <path d="M8 2v16M3 8l5-6 5 6" /></svg
+              ><span>Schematic venue</span>
+            </div>
+          </div>
+          <div class="map-wrap">
+            <svg
+              id="venue-map"
+              viewBox="0 0 1000 700"
+              role="group"
+              aria-label="Festival venue map with incidents and draggable crew markers"
+            >
+              <defs>
+                <pattern
+                  id="grass"
+                  width="8"
+                  height="8"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <circle cx="1" cy="1" r=".5" fill="#abc5a6" opacity=".35" />
+                </pattern>
+              </defs>
+              <rect width="1000" height="700" fill="#e7eee2" />
+              <path
+                d="M52 60H948V645H52Z"
+                fill="#f5f4eb"
+                stroke="#a6b9a5"
+                stroke-width="3"
+              />
+              <path d="M70 79H930V630H70Z" fill="#e9efe3" />
+              <path
+                d="M68 418H930M470 79V630M70 185H930"
+                fill="none"
+                stroke="#d4d6be"
+                stroke-width="28"
+                stroke-linecap="round"
+              />
+              <path
+                d="M68 418H930M470 79V630M70 185H930"
+                fill="none"
+                stroke="#faf9ef"
+                stroke-width="20"
+                stroke-linecap="round"
+              />
+              <path
+                d="M80 96H445V169H80ZM497 94H920V171H497ZM89 442H444V615H89ZM496 442H918V615H496Z"
+                fill="url(#grass)"
+                opacity=".75"
+              />
+              <g class="zone-shape">
+                <rect x="108" y="93" width="238" height="150" rx="9" />
+                <rect x="605" y="102" width="271" height="146" rx="9" />
+                <rect x="104" y="345" width="270" height="168" rx="9" />
+                <rect x="640" y="414" width="247" height="180" rx="9" />
+              </g>
+              <g class="stage">
+                <rect x="113" y="105" width="52" height="115" rx="4" />
+                <rect x="815" y="119" width="49" height="110" rx="4" />
+                <rect x="114" y="360" width="56" height="137" rx="4" />
+              </g>
+              <g class="trees" aria-hidden="true">
+                <circle cx="351" cy="123" r="15" />
+                <circle cx="379" cy="124" r="12" />
+                <circle cx="578" cy="116" r="14" />
+                <circle cx="605" cy="120" r="12" />
+                <circle cx="351" cy="524" r="17" />
+                <circle cx="682" cy="527" r="15" />
+                <circle cx="711" cy="524" r="12" />
+              </g>
+              <g class="map-labels">
+                <text x="215" y="207">NORTH STAGE</text>
+                <text x="692" y="207">EAST LAWN</text>
+                <text x="209" y="471">WEST MARKET</text>
+                <text x="733" y="560">WATERFRONT</text>
+                <text x="480" y="105" text-anchor="middle">NORTH WALK</text>
+                <text x="480" y="393" text-anchor="middle">MAIN CONCOURSE</text>
+                <text x="480" y="666" text-anchor="middle">SOUTH GATE</text>
+              </g>
+              <g id="route-layer"></g>
+              <g id="report-layer"></g>
+              <g id="crew-layer"></g>
+            </svg>
+            <div class="map-hint" id="map-hint">
+              Crew start positions are editable · Arrow keys move a focused crew
+            </div>
+          </div>
+          <div class="map-legend">
+            <span><i class="legend-dot incident"></i> Incident</span
+            ><span><i class="legend-dot crew"></i> Crew</span
+            ><span><i class="legend-line"></i> Active route</span>
+          </div>
+        </section>
+        <aside class="rail">
+          <div
+            class="rail-tabs"
+            role="tablist"
+            aria-label="Control room details"
+          >
+            <button
+              class="tab active"
+              id="tab-reports"
+              type="button"
+              role="tab"
+              aria-controls="reports-panel"
+              aria-selected="true"
+            >
+              Reports <span id="report-count"></span></button
+            ><button
+              class="tab"
+              id="tab-crew"
+              type="button"
+              role="tab"
+              aria-controls="crew-panel"
+              aria-selected="false"
+            >
+              Crew <span id="crew-count"></span>
+            </button>
+          </div>
+          <div class="rail-body">
+            <section
+              id="reports-panel"
+              role="tabpanel"
+              aria-labelledby="tab-reports"
+            >
+              <div class="rail-heading">
+                <h2>Incident reports</h2>
+                <span id="incident-status">Waiting for replay</span>
+              </div>
+              <div
+                id="report-detail"
+                class="report-detail"
+                aria-live="polite"
+              ></div>
+              <div id="report-list" class="report-list"></div>
+            </section>
+            <section
+              id="crew-panel"
+              role="tabpanel"
+              aria-labelledby="tab-crew"
+              hidden
+            >
+              <div class="rail-heading">
+                <h2>Available crew</h2>
+                <span>Starting positions</span>
+              </div>
+              <div id="crew-list" class="crew-list"></div>
+            </section>
+          </div>
+          <div
+            id="plan-note"
+            class="plan-note"
+            role="status"
+            aria-live="polite"
+          ></div>
+        </aside>
+      </main>
+      <footer class="transport">
+        <div class="transport-head">
+          <div class="transport-title">
+            <strong>Replay</strong><span id="time-label">00:00 / 20:00</span>
+          </div>
+          <div id="comparison" class="comparison">
+            Move a crew to compare response times
+          </div>
+        </div>
+        <div class="transport-controls">
+          <button
+            id="reset-button"
+            class="icon-button"
+            type="button"
+            aria-label="Reset replay"
+            title="Reset replay"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 11a8 8 0 1 1 2 6M4 4v7h7" />
+            </svg></button
+          ><button
+            id="play-button"
+            class="play-button"
+            type="button"
+            aria-label="Play replay"
+          >
+            <svg id="play-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m8 5 11 7-11 7Z" /></svg
+            ><span id="play-text">Play</span></button
+          ><label class="timeline-label" for="timeline">Timeline</label
+          ><input
+            id="timeline"
+            type="range"
+            min="0"
+            max="1200"
+            value="0"
+            step="1"
+            aria-label="Replay time"
+          /><select id="speed" aria-label="Replay speed">
+            <option value="1">1× speed</option>
+            <option value="5" selected>5× speed</option>
+            <option value="15">15× speed</option>
+            <option value="30">30× speed</option>
+          </select>
+        </div>
+        <div
+          class="timeline-events"
+          id="timeline-events"
+          aria-hidden="true"
+        ></div>
+      </footer>
+    </div>
+  </body>
+</html>

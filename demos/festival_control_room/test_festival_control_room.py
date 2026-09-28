@@ -330,6 +330,7 @@ class ControlRoomTests(unittest.TestCase):
                         urllib.request.Request(url, data, headers), timeout=3
                     )
                 self.assertEqual(caught.exception.code, 400)
+                caught.exception.close()
         finally:
             server.shutdown()
             server.server_close()
