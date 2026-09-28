@@ -190,6 +190,7 @@ lock.addEventListener("click", () => {
 });
 
 async function start() {
+  const initialVersion = version;
   try {
     const body = await request("/api/scenarios");
     body.scenarios.forEach((scenario) => {
@@ -201,10 +202,12 @@ async function start() {
       button.addEventListener("click", () => show(scenario.id));
       scenarios.append(button);
     });
-    await show(body.scenarios[0].id);
+    if (version === initialVersion && !input.value.trim()) await show(body.scenarios[0].id);
   } catch (error) {
-    decision.textContent = "Error";
-    why.textContent = `Could not load examples. ${error.message}`;
+    if (version === initialVersion) {
+      decision.textContent = "Error";
+      why.textContent = `Could not load examples. ${error.message}`;
+    }
   }
 }
 start();
