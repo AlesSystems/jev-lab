@@ -206,15 +206,9 @@ select:hover {
   fill: #658269;
 }
 .map-hint {
-  position: absolute;
-  left: 36px;
-  bottom: 17px;
-  background: #fffefaed;
   color: #486451;
-  padding: 8px 10px;
+  padding: 7px 24px 2px;
   font-size: 12px;
-  border-radius: 4px;
-  pointer-events: none;
 }
 .map-legend {
   display: flex;
@@ -733,10 +727,11 @@ select:hover {
     padding: 0 7px;
   }
   .map-labels {
-    font-size: 28px;
+    font-size: 38px;
+    letter-spacing: 0.02em;
   }
   .map-labels text:nth-last-child(-n + 3) {
-    font-size: 22px;
+    font-size: 32px;
   }
   .map-panel {
     height: 390px;
@@ -750,10 +745,7 @@ select:hover {
     display: none;
   }
   .map-hint {
-    left: 20px;
-    bottom: 12px;
-    font-size: 12px;
-    max-width: 210px;
+    padding: 6px 16px 2px;
   }
   .map-legend {
     gap: 12px;
