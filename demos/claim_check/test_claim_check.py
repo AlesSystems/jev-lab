@@ -106,6 +106,14 @@ class ClaimTests(unittest.TestCase):
         self.assertEqual(payload, {"ok": True})
         board.assert_called_once_with("csv_faster", api_key="secret")
 
+    def test_scenarios_report_key_status_for_this_server(self):
+        with mock.patch.dict("os.environ", {"TYPESAFE_API_KEY": " secret "}):
+            _, configured, _ = claim_check.route("GET", "/api/scenarios")
+        with mock.patch.dict("os.environ", {"TYPESAFE_API_KEY": " "}):
+            _, missing, _ = claim_check.route("GET", "/api/scenarios")
+        self.assertTrue(configured["api_key_configured"])
+        self.assertFalse(missing["api_key_configured"])
+
     def test_custom_endpoint_passes_text_to_jev_without_fixture_label(self):
         seen = {}
         def transport(body, key):
