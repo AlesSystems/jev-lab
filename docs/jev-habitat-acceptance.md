@@ -14,13 +14,13 @@ The offline path accepts only prepared examples with their original room state. 
 
 ## Verification
 
-All 92 Python tests across the nine demo directories passed. Habitat's five tests cover fixture eligibility, request validation, malformed answers, missing credentials, provider failures, and unused speculative brightness answers. JavaScript syntax, Python compilation, and `git diff --check` passed.
+All 93 Python tests across the nine demo directories passed. Habitat's six tests cover fixture eligibility, request validation, malformed answers, missing credentials, provider failures, unused speculative brightness answers, and an uncertain fixture that changes the room. JavaScript syntax, Python compilation, and `git diff --check` passed.
 
 The committed `demos/jev_habitat/browser-check.cjs` exercises a running local server. The desktop and mobile pass verified all three device changes, no-change handling, JSON inspection, local threshold changes without extra requests, edited-fixture rejection, missing-key errors, stale-response discard, reduced motion, and no page errors or horizontal overflow. Run it with Playwright and Chrome available after starting Habitat on port 8777.
 
 Screenshots in `demos/jev_habitat/screenshots/` are browser captures of the illustrative fixture mode at desktop width 1440 and mobile width 390. They are not generated artwork or live Jev results.
 
-The single Impeccable detector pass found small functional text, one low-contrast label, external display fonts, and cramped-header advisories. The implementation increased labels to at least 12px, darkened plan text, used system fonts, and padded headers. The plan grid remains because it belongs to the room diagram. A visual pass also moved room labels clear of furniture and replaced hard shadows. Independent review is pending.
+The single Impeccable detector pass found small functional text, one low-contrast label, external display fonts, and cramped-header advisories. The implementation increased labels to at least 12px, darkened plan text, used system fonts, and padded headers. The plan grid remains because it belongs to the room diagram. A visual pass also moved room labels clear of furniture and replaced hard shadows. The independent Sol high correctness review found that the uncertain lighting fixture targeted the starting brightness. Commit `7a74970` changes its target from 2 to 3 and adds a regression check. The reviewer independently verified that lowering the threshold from .70 to .50 makes Apply available without another request and that Apply changes the lights from 2 to 3. The full branch whitespace check also passes after removing a trailing blank line. The reviewer passed the correction with no new actionable findings. The separate Sol high specification and UI reviewer returned `ship` after inspecting desktop and mobile captures, the source, the direction contract, and the guide. No material UI or guide blocker remained in that review.
 
 ## Limits
 
