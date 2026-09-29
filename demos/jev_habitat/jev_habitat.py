@@ -1,4 +1,3 @@
-"""Local Jev Habitat demo. All devices are simulated in the browser."""
 from __future__ import annotations
 
 import argparse
