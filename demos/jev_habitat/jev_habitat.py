@@ -24,7 +24,7 @@ EXAMPLES = [
     {'room': 'living', 'text': 'Dim the lights for a film.', 'action': 'lights', 'brightness': 1, 'applicable': .96},
     {'room': 'bedroom', 'text': 'Open the blinds.', 'action': 'blinds_open', 'brightness': 2, 'applicable': .98},
     {'room': 'study', 'text': 'Put some music on.', 'action': 'music_on', 'brightness': 2, 'applicable': .95},
-    {'room': 'living', 'text': 'Maybe make the lights a bit brighter.', 'action': 'lights', 'brightness': 2, 'applicable': .58},
+    {'room': 'living', 'text': 'Maybe make the lights a bit brighter.', 'action': 'lights', 'brightness': 3, 'applicable': .58},
     {'room': 'living', 'text': 'What is the weather tomorrow?', 'action': 'no_change', 'brightness': 2, 'applicable': .04},
 ]
 ACTIONS = {

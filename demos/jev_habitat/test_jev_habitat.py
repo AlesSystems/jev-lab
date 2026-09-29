@@ -32,6 +32,14 @@ class HabitatTests(unittest.TestCase):
         changed['devices']['lights'] = 3
         with self.assertRaises(ValueError): evaluate(changed)
 
+    def test_low_applicability_fixture_has_visible_target(self):
+        example = next(item for item in EXAMPLES if item['text'].startswith('Maybe'))
+        payload = {'text': example['text'], 'room': example['room'], 'devices': copy.deepcopy(ROOMS[example['room']]['initial']), 'mode': 'fixture'}
+        result = evaluate(payload)
+        self.assertLess(result['answers']['applicable']['noul'], .7)
+        self.assertEqual(result['target'], 3)
+        self.assertNotEqual(result['target'], payload['devices']['lights'])
+
     def test_invalid_boundary(self):
         for key, value in [('room', 'garage'), ('text', ''), ('mode', 'other')]:
             changed = copy.deepcopy(self.payload)
