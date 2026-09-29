@@ -13,6 +13,8 @@ This repository documents what Jev is useful for, where its limits appear, and h
 
 ## Demos
 
+For start commands and a short walkthrough of every local page, see [Run the UI demos](docs/ui-demos.md).
+
 Start with the [demo idea shortlist](docs/demo-ideas.md): eight small experiments for developer tools, SaaS workflows, and automations. Each includes a concrete input, Jev's decision, a simpler baseline, and a success check.
 
 Recommended first experiment: [Repro Coach](docs/first-demo-repro-coach.md), which checks bug reports for missing information and selects a fixed follow-up template.
