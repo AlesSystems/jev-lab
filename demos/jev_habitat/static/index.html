@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jev Habitat · TypeSafe</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="masthead"><a class="brand" href="/">Jev Habitat<svg class="brand-mark" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M5 5l14 14M19 5 5 19"/></svg></a><span>Room decisions, in the open</span><span class="mast-right">A local TypeSafe experiment</span></header>
+  <main>
+    <div class="intro"><h1>Make a room respond.</h1><p>Choose a room, write what you want, and see the three judgments behind a simulated change. Nothing moves until you apply it.</p></div>
+    <div class="workbench">
+      <section class="plan-panel" aria-labelledby="plan-title">
+        <div class="panel-head"><h2 id="plan-title">Room plan</h2><span id="room-label">Living room</span></div>
+        <div class="plan" id="plan">
+          <div class="plan-top"><span>HABITAT / FLOOR 01</span><span>SIMULATED DEVICES</span></div>
+          <button class="room room-living selected" data-room="living" aria-pressed="true"><span class="room-name">Living room</span><span class="furniture sofa"></span><span class="furniture table"></span><span class="light-pool"></span><span class="room-mini" data-mini="living"></span></button>
+          <button class="room room-bedroom" data-room="bedroom" aria-pressed="false"><span class="room-name">Bedroom</span><span class="furniture bed"></span><span class="light-pool"></span><span class="room-mini" data-mini="bedroom"></span></button>
+          <button class="room room-study" data-room="study" aria-pressed="false"><span class="room-name">Study</span><span class="furniture desk"></span><span class="light-pool"></span><span class="room-mini" data-mini="study"></span></button>
+          <div class="plan-caption">SELECT A ROOM IN THE PLAN</div>
+        </div>
+        <div class="devices" aria-label="Selected room controls">
+          <div><label for="lights">Lights <output id="lights-value">Reading · 2</output></label><input id="lights" type="range" min="0" max="3" step="1"></div>
+          <div><label for="music">Music</label><button id="music" type="button" class="device-button"></button></div>
+          <div><label for="blinds">Blinds</label><button id="blinds" type="button" class="device-button"></button></div>
+          <button id="reset" type="button" class="reset-button">Reset this room</button>
+        </div>
+      </section>
+      <section class="composer" aria-labelledby="composer-title">
+        <div class="panel-head"><h2 id="composer-title">Ask the room</h2><span class="small">One action at a time</span></div>
+        <p class="section-copy">Try a prepared request or type your own. Prepared answers are illustrative; live requests use Jev when a server key is configured.</p>
+        <div id="examples" class="examples" aria-label="Prepared examples"></div>
+        <label for="request-text" class="field-label">Your request</label>
+        <textarea id="request-text" maxlength="300" rows="4"></textarea>
+        <div class="composer-bottom"><label for="mode">Answer source</label><select id="mode"><option value="fixture">Prepared fixture</option><option value="live">Live Jev</option></select></div>
+        <p id="mode-note" class="mode-note"></p>
+        <button id="evaluate" type="button" class="primary">Evaluate request <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 19 19 5M8 5h11v11"/></svg></button>
+        <p id="status" role="status" aria-live="polite">Choose a prepared request to begin.</p>
+      </section>
+    </div>
+    <section class="decision" aria-labelledby="decision-title"><div class="panel-head"><h2 id="decision-title">From request to room</h2><span>Jev judges · code decides</span></div>
+      <div class="flow"><div><span>STATE</span><p>Selected room, devices, request</p></div><div><span>QUESTIONS</span><p>Choice · Score · Noul, batched</p></div><div><span>ANSWERS</span><p>Typed judgments and probabilities</p></div><div><span>RULE</span><p>Threshold on the used answer</p></div><div><span>ACTION</span><p>Apply a simulated change</p></div></div>
+      <div id="empty-result" class="empty-result">A decision will appear here after evaluation. The room stays as it is until you apply.</div>
+      <div id="result" hidden><div class="result-head"><div><span id="result-source" class="source-tag"></span><h3 id="result-title"></h3><p id="result-summary"></p></div><button id="apply" type="button" class="primary"></button></div>
+      <div class="answer-grid"><div><span>CHOICE · ACTION</span><strong id="choice"></strong><p id="choice-detail"></p></div><div><span>SCORE · BRIGHTNESS</span><strong id="score"></strong><p id="score-detail"></p></div><div><span>NOUL · APPLICABLE</span><strong id="noul"></strong><p id="noul-detail"></p></div></div>
+      <div class="rule-row"><label for="threshold">Minimum confidence and applicability <output id="threshold-value">0.70</output></label><input id="threshold" type="range" min="0" max="1" step="0.01" value="0.70"><p id="rule-explanation"></p></div>
+      <details class="inspector"><summary>Inspect exact JSON <span id="telemetry"></span></summary><div class="json-columns"><div><h4>REQUEST</h4><pre id="raw-request"></pre></div><div><h4>RESPONSE</h4><pre id="raw-response"></pre></div></div></details></div>
+    </section>
+  </main>
+  <footer>Jev Habitat <span>All devices are simulated. Fixtures are examples, not measured Jev outputs.</span></footer>
+</body>
+</html>

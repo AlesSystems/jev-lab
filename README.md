@@ -13,6 +13,8 @@ This repository documents what Jev is useful for, where its limits appear, and h
 
 ## Demos
 
+For start commands and a short walkthrough of every local page, see [Run the UI demos](docs/ui-demos.md).
+
 Start with the [demo idea shortlist](docs/demo-ideas.md): eight small experiments for developer tools, SaaS workflows, and automations. Each includes a concrete input, Jev's decision, a simpler baseline, and a success check.
 
 Recommended first experiment: [Repro Coach](docs/first-demo-repro-coach.md), which checks bug reports for missing information and selects a fixed follow-up template.
@@ -33,6 +35,8 @@ Two evidence workbenches let you change the inputs and inspect the resulting jud
 - [Feedback Kitchen](demos/feedback_kitchen/README.md) matches noisy feedback to a fixed catalog of improvements. Edit comments, inspect supporting evidence, and collect improvements in a tray.
 
 Both run with Python's standard library and a browser. Offline results are labeled baselines. Set `TYPESAFE_API_KEY` in the server environment to request live Choice, Score, and Noul judgments.
+
+[Jev Habitat](demos/jev_habitat/README.md) is a separate room simulation. Turn a request into typed judgments, inspect the API exchange, adjust a local decision threshold, and apply a change to simulated lights, music, or blinds. Prepared examples work offline. Free text uses live Jev.
 
 ## Research notes
 
