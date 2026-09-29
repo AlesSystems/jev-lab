@@ -8,4 +8,6 @@ Set `TYPESAFE_API_KEY` in the server environment and select **Live Jev** to eval
 
 Test: `python3 -m unittest discover -s demos/jev_habitat -p 'test_*.py'`.
 
+For the optional browser check, start the server on port 8777 and run `node demos/jev_habitat/browser-check.cjs` in an environment with Playwright and Chrome available. The check covers device changes, local thresholds, stale responses, errors, and desktop/mobile screenshots. Playwright is not needed to run the demo.
+
 The demo uses a closed action catalog and makes no real device changes. A request for multiple actions or an unclear request should select `no_change`; model behavior still requires evaluation against real examples before any production use. No live response has been claimed without a configured key.

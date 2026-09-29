@@ -1,6 +1,6 @@
 # Run the UI demos
 
-These six local pages use Python's standard library and a browser. Use Python 3.10 or newer and run commands from the repository root. No package install or build step is needed. Each server binds to `127.0.0.1`; stop it with Ctrl-C.
+These seven local pages use Python's standard library and a browser. Use Python 3.10 or newer and run commands from the repository root. No package install or build step is needed. Each server binds to `127.0.0.1`; stop it with Ctrl-C.
 
 Start a page with its command below, then open the listed address. To use live Jev, set `TYPESAFE_API_KEY` in the same server environment before starting the command. For example, in zsh:
 
@@ -19,6 +19,7 @@ The key stays on the local server. Without it, the pages show their stated offli
 | [Festival Control Room](../demos/festival_control_room/README.md) | `python3 demos/festival_control_room/festival_control_room.py serve` | http://127.0.0.1:8768 |
 | [Launch Lab](../demos/launch_lab/README.md) | `python3 demos/launch_lab/launch_lab.py serve` | http://127.0.0.1:8766 |
 | [Feedback Kitchen](../demos/feedback_kitchen/README.md) | `python3 demos/feedback_kitchen/feedback_kitchen.py serve` | http://127.0.0.1:8767 |
+| [Jev Habitat](../demos/jev_habitat/README.md) | `python3 demos/jev_habitat/jev_habitat.py serve` | http://127.0.0.1:8777 |
 
 Claim check and Launch Lab share port 8766. Interruption budget and Feedback Kitchen share port 8767. To run either pair together, add `--port 8770` to one start command and open that port in the browser. Every server accepts `--port`.
 
@@ -45,6 +46,18 @@ Choose a fictional release, inspect its signals, select evidence cards, and pres
 ## Feedback Kitchen
 
 Choose a fictional product, inspect feedback, and collect up to three improvements. The initial eight comments have a prepared illustrative baseline. Edit or add a comment to clear the old judgments, then select **Assess with Jev**. With a key, Jev uses Choice to match comments to a fixed improvement catalog, Score for disruption, and Noul for support across the whole comment collection. Code limits the catalog and tray. The prepared baseline covers only unedited examples, so changed feedback needs a live assessment.
+
+## Jev Habitat
+
+Choose a room and a prepared request, then evaluate it. Inspect the answers before you apply the proposed change to the simulated room. Choice selects an action, Score describes lighting brightness, and Noul estimates whether the request applies to the selected room. The lighting question is speculative and its answer matters only when the chosen action changes the lights.
+
+Change the decision threshold to see the application hold or permit the same answer without calling Jev again. Then apply a change and watch the room respond. Edit the request or reset the room to invalidate the old proposal. The inspector shows the state and questions sent to Jev, the typed answers, and the application rule. Offline results are illustrative fixtures for exact prepared requests. Free text needs **Live Jev** and a server-side key. No physical devices are connected.
+
+## What every demo has in common
+
+Your browser sends input to its own local Python server. In live mode, that server sends application state and narrow questions to Jev. Jev returns typed answers rather than a written explanation. The application decides what to do with those answers, including when to ask for review or leave something unchanged. A high confidence value does not prove that the decision is correct.
+
+For the current contract, see the [TypeSafe API reference](https://docs.typesafe.ai/api) and [function-calling example](https://docs.typesafe.ai/cookbooks/function_calling).
 
 ## Command-line demos
 

@@ -36,6 +36,8 @@ Two evidence workbenches let you change the inputs and inspect the resulting jud
 
 Both run with Python's standard library and a browser. Offline results are labeled baselines. Set `TYPESAFE_API_KEY` in the server environment to request live Choice, Score, and Noul judgments.
 
+[Jev Habitat](demos/jev_habitat/README.md) is a separate room simulation. Turn a request into typed judgments, inspect the API exchange, adjust a local decision threshold, and apply a change to simulated lights, music, or blinds. Prepared examples work offline. Free text uses live Jev.
+
 ## Research notes
 
 - [Where Jev fits](docs/jev-fit.md) — primitives, integration boundaries, limitations, and dated primary sources.
