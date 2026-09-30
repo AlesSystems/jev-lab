@@ -38,6 +38,8 @@ Both run with Python's standard library and a browser. Offline results are label
 
 [Jev Habitat](demos/jev_habitat/README.md) is a separate room simulation. Turn a request into typed judgments, inspect the API exchange, adjust a local decision threshold, and apply a change to simulated lights, music, or blinds. Prepared examples work offline. Free text uses live Jev.
 
+The [demo dashboard](demos/demo_dashboard/README.md) lists the local pages and the two command-line demos on one warm desk. Switch a demo, then read the request shape beside a blank response. It does not call Jev.
+
 ## Research notes
 
 - [Where Jev fits](docs/jev-fit.md) — primitives, integration boundaries, limitations, and dated primary sources.

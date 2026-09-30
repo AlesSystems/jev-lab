@@ -1,6 +1,6 @@
 # Run the UI demos
 
-These seven local pages use Python's standard library and a browser. Use Python 3.10 or newer and run commands from the repository root. No package install or build step is needed. Each server binds to `127.0.0.1`; stop it with Ctrl-C.
+These local pages use Python's standard library and a browser. Use Python 3.10 or newer and run commands from the repository root. No package install or build step is needed. Each server binds to `127.0.0.1`; stop it with Ctrl-C.
 
 Start a page with its command below, then open the listed address. To use live Jev, set `TYPESAFE_API_KEY` in the same server environment before starting the command. For example, in zsh:
 
@@ -20,6 +20,7 @@ The key stays on the local server. Without it, the pages show their stated offli
 | [Launch Lab](../demos/launch_lab/README.md) | `python3 demos/launch_lab/launch_lab.py serve` | http://127.0.0.1:8766 |
 | [Feedback Kitchen](../demos/feedback_kitchen/README.md) | `python3 demos/feedback_kitchen/feedback_kitchen.py serve` | http://127.0.0.1:8767 |
 | [Jev Habitat](../demos/jev_habitat/README.md) | `python3 demos/jev_habitat/jev_habitat.py serve` | http://127.0.0.1:8777 |
+| [Demo dashboard](../demos/demo_dashboard/README.md) | `python3 demos/demo_dashboard/demo_dashboard.py serve` | http://127.0.0.1:8769 |
 
 Claim check and Launch Lab share port 8766. Interruption budget and Feedback Kitchen share port 8767. To run either pair together, add `--port 8770` to one start command and open that port in the browser. Every server accepts `--port`.
 
@@ -52,6 +53,10 @@ Choose a fictional product, inspect feedback, and collect up to three improvemen
 Choose a room and a prepared request, then evaluate it. Inspect the answers before you apply the proposed change to the simulated room. Choice selects an action, Score describes lighting brightness, and Noul estimates whether the request applies to the selected room. The lighting question is speculative and its answer matters only when the chosen action changes the lights.
 
 Change the decision threshold to see the application hold or permit the same answer without calling Jev again. Then apply a change and watch the room respond. Edit the request or reset the room to invalidate the old proposal. The inspector shows the state and questions sent to Jev, the typed answers, and the application rule. Offline results are illustrative fixtures for exact prepared requests. Free text needs **Live Jev** and a server-side key. No physical devices are connected.
+
+## Demo dashboard
+
+Open the dashboard to switch every local page and the two command-line demos without starting them. The top rail selects a demo. The sheet under it states what Jev is asked, what code keeps, and how to run that demo. The lower sheet is the request body beside a blank response shape. Select a helper to mark the matching JSON path. Blank fields are not a recorded Jev response. This page never calls the API.
 
 ## What every demo has in common
 
