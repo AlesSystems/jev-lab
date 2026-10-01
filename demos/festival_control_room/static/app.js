@@ -1,3 +1,19 @@
+
+function appendInspection(container, inspection) {
+  const details = document.createElement("details");
+  details.className = "jev-inspection";
+  const summary = document.createElement("summary");
+  summary.textContent = "Inspect Jev request and response";
+  const note = document.createElement("p");
+  note.textContent = inspection?.note || "No Jev response is available for this result. Baselines, fixtures and code rules are not Jev thinking.";
+  details.append(summary, note);
+  if (inspection) {
+    const pre = document.createElement("pre");
+    pre.textContent = JSON.stringify({ request: inspection.request, response: inspection.response }, null, 2);
+    details.append(pre);
+  }
+  container.append(details);
+}
 const $ = (id) => document.getElementById(id);
 const svg = $("venue-map");
 const ns = "http://www.w3.org/2000/svg";
@@ -334,6 +350,7 @@ function renderDetails() {
   if (detail.dataset.key === detailKey) return;
   detail.dataset.key = detailKey;
   detail.innerHTML = `<div class="detail-title">${esc(report.title)}</div><p class="detail-copy">${esc(report.text)}</p><div class="fact-grid"><div class="fact"><label>Urgency</label><strong>${judgment ? `${Number(judgment.urgency).toFixed(1)} / 3` : "Unavailable"}</strong></div><div class="fact"><label>Suggested team</label><strong>${specialtyName(judgment?.team)}</strong></div><div class="fact"><label>Assignment</label><strong>${crew ? esc(crew.name) : esc(assignment?.status === "review" ? "Needs review" : "None")}</strong></div><div class="fact"><label>Response</label><strong>${assignment?.arrive_at != null && assignment?.dispatch_at != null ? `${Math.round(assignment.arrive_at - report.at)} sec` : esc(assignment?.reason || "Pending")}</strong></div></div><div class="evidence">Team confidence ${judgment ? Math.round(judgment.team_confidence * 100) + "%" : "—"} · Urgency confidence ${judgment ? Math.round(judgment.urgency_confidence * 100) + "%" : "—"}<br>Safety evidence ${judgment ? Math.round(judgment.evidence * 100) + "%" : "—"} · ${escalation}</div>`;
+  appendInspection(detail, state.plan.inspection);
 }
 function renderCrew() {
   const list = $("crew-list");

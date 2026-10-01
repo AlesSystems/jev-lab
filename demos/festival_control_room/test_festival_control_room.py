@@ -108,7 +108,7 @@ class ControlRoomTests(unittest.TestCase):
                     },
                 }
                 answers[rid + "_evidence"] = {"type": "noul", "noul": 0.9}
-            return json.dumps({"model": "jev-1.13.0", "answers": answers}).encode()
+            return json.dumps({"model": "jev-1.13.0", "answers": answers, "reasoning": "Synthetic test rationale", "usage": {"input_tokens": 50}}).encode()
 
         try:
             first = room.make_plan("live", input_crews(), "secret", transport)
@@ -120,6 +120,11 @@ class ControlRoomTests(unittest.TestCase):
             )
             self.assertEqual(len(calls), 1)
             self.assertEqual(first["judgments"], second["judgments"])
+            self.assertEqual(first["inspection"], second["inspection"])
+            self.assertEqual(first["inspection"]["request"], calls[0][0])
+            self.assertEqual(first["inspection"]["response"]["reasoning"], "Synthetic test rationale")
+            self.assertEqual(first["inspection"]["response"]["usage"], {"input_tokens": 50})
+            self.assertIsNone(room.make_plan("fixture", input_crews())["inspection"])
             self.assertGreater(
                 first["summary"]["assigned"], second["summary"]["assigned"]
             )

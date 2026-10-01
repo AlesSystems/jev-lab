@@ -278,3 +278,7 @@ select {
 .test-form .check { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
 .test-form .rule { margin-top: 16px; }
 .status { margin: 0 0 6px; font-weight: 600; color: var(--cobalt); }
+
+.jev-inspection { margin-top: 24px; padding: 16px; border-top: 1px solid currentColor; min-width: 0; }
+.jev-inspection summary { cursor: pointer; padding-block: 8px; }
+.jev-inspection pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 420px; overflow: auto; font-size: 13px; }

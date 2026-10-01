@@ -45,6 +45,7 @@ class ClaimTests(unittest.TestCase):
             raise AssertionError("Jev was called")
 
         board = claim_check.board_payload("all_faster", api_key=None, transport=transport)
+        self.assertIsNone(board.get("inspection"))
         self.assertEqual(board["engine"], "offline_baseline")
         self.assertIsNone(board["jev"])
         self.assertEqual(board["decision"], "INSUFFICIENT")
@@ -56,6 +57,7 @@ class ClaimTests(unittest.TestCase):
             seen["key"] = api_key
             seen["body"] = json.loads(body)
             return json.dumps({
+                "reasoning": "Synthetic provider rationale for preservation testing.",
                 "model": "jev-1.13.0",
                 "answers": {
                     "verdict": {
@@ -83,6 +85,9 @@ class ClaimTests(unittest.TestCase):
         self.assertEqual(board["decision"], "INSUFFICIENT")
         self.assertEqual(board["jev"]["verdict"], "insufficient_evidence")
         self.assertEqual(board["jev"]["confidence"], 0.86)
+        self.assertEqual(board["inspection"]["request"], request)
+        self.assertEqual(board["inspection"]["response"], json.loads(transport(json.dumps(request).encode(), "secret")))
+        self.assertIn("reasoning", board["inspection"]["response"])
         self.assertTrue(board["split"])
 
     def test_low_confidence_stays_in_review(self):
@@ -95,6 +100,7 @@ class ClaimTests(unittest.TestCase):
         board = claim_check.board_payload("csv_faster", api_key="secret", transport=lambda _body, _key: b"{}")
         self.assertEqual(board["engine"], "unavailable")
         self.assertEqual(board["decision"], "UNAVAILABLE")
+        self.assertEqual(board["inspection"]["response"], {})
         self.assertIsNone(board["jev"])
         self.assertEqual(board["baseline"]["verdict"], "supported")
 
@@ -133,6 +139,7 @@ class ClaimTests(unittest.TestCase):
             status, board, _ = claim_check.route("POST", "/api/check", b'{"claim":"Revenue fell", "evidence":"Revenue grew"}')
         self.assertEqual(status, 200)
         self.assertEqual(board["decision"], "BASELINE ONLY")
+        self.assertIsNone(board.get("inspection"))
         self.assertEqual(board["engine"], "offline_baseline")
         self.assertIsNone(board["jev"])
         self.assertNotIn("label", board)

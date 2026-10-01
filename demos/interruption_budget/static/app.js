@@ -1,3 +1,19 @@
+
+function appendInspection(container, inspection) {
+  const details = document.createElement("details");
+  details.className = "jev-inspection";
+  const summary = document.createElement("summary");
+  summary.textContent = "Inspect Jev request and response";
+  const note = document.createElement("p");
+  note.textContent = inspection?.note || "No Jev response is available for this result. Baselines, fixtures and code rules are not Jev thinking.";
+  details.append(summary, note);
+  if (inspection) {
+    const pre = document.createElement("pre");
+    pre.textContent = JSON.stringify({ request: inspection.request, response: inspection.response }, null, 2);
+    details.append(pre);
+  }
+  container.append(details);
+}
 const decision = document.querySelector("#decision");
 const status = document.querySelector("#status");
 const why = document.querySelector("#why");
@@ -34,6 +50,7 @@ function render(inbox) {
           <p class="meta">${escapeHTML(event.note)}</p>
         </article>`).join("") : `<p class="empty">Nothing in this bay.</p>`}
     </section>`).join("")}</div>`;
+  appendInspection(sheet, inbox.inspection);
 }
 
 async function show() {
@@ -69,6 +86,16 @@ async function show() {
   }
 }
 
+form.addEventListener("input", () => {
+  active = { custom: true, text: eventText.value.trim(), page: pageFlag.checked };
+  requestId++;
+  sheet.replaceChildren();
+  sort.disabled = false;
+  sample.disabled = false;
+  decision.textContent = "Ready";
+  status.textContent = "Event edited. Sort it to see a current result.";
+  why.textContent = "";
+});
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   if (!form.reportValidity()) return;

@@ -1,3 +1,19 @@
+
+function appendInspection(container, inspection) {
+  const details = document.createElement("details");
+  details.className = "jev-inspection";
+  const summary = document.createElement("summary");
+  summary.textContent = "Inspect Jev request and response";
+  const note = document.createElement("p");
+  note.textContent = inspection?.note || "No Jev response is available for this result. Baselines, fixtures and code rules are not Jev thinking.";
+  details.append(summary, note);
+  if (inspection) {
+    const pre = document.createElement("pre");
+    pre.textContent = JSON.stringify({ request: inspection.request, response: inspection.response }, null, 2);
+    details.append(pre);
+  }
+  container.append(details);
+}
 const decision = document.querySelector("#decision");
 const why = document.querySelector("#why");
 const scenarios = document.querySelector("#scenarios");
@@ -43,6 +59,7 @@ function render(board) {
   const verdict = board.jev?.verdict ? reading(board.jev.verdict) : board.engine === "live_jev" ? "Review" : board.engine === "unavailable" ? "Unavailable" : "No API key";
   pair.append(section("Jev", verdict, board.jev ? `Live result · confidence ${Number(board.jev.confidence).toFixed(2)} · ${board.jev.model}` : board.note));
   sheet.replaceChildren(pair);
+  appendInspection(sheet, board.inspection);
 }
 
 form.addEventListener("input", () => {

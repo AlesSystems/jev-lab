@@ -74,6 +74,7 @@ class MappingTests(unittest.TestCase):
             raise AssertionError("Jev was called")
 
         board = field_matchmaker.board_payload("vendor_csv", api_key=None, transport=transport)
+        self.assertIsNone(board.get("inspection"))
         self.assertEqual(board["engine"], "offline_baseline")
         self.assertTrue(all(column["jev"] is None for column in board["columns"]))
 
@@ -104,6 +105,8 @@ class MappingTests(unittest.TestCase):
         self.assertIsNone(by_header["Work email"]["target"])
         self.assertEqual(by_header["Account"], {"status": "suggested", "target": None, "confidence": 0.88})
         self.assertEqual(board["engine"], "live_jev")
+        self.assertEqual(board["inspection"]["request"], request)
+        self.assertEqual(board["inspection"]["response"], json.loads(transport(json.dumps(request).encode(), "secret")))
 
     def test_duplicate_jev_targets_still_conflict_in_code(self):
         board = field_matchmaker.board_payload(
@@ -126,6 +129,7 @@ class MappingTests(unittest.TestCase):
     def test_a_bad_response_does_not_invent_mappings(self):
         board = field_matchmaker.board_payload("clean_headers", api_key="secret", transport=lambda _body, _key: b"{}")
         self.assertEqual(board["engine"], "unavailable")
+        self.assertEqual(board["inspection"]["response"], {})
         self.assertTrue(all(column["jev"]["status"] == "unavailable" for column in board["columns"]))
         self.assertTrue(all(column["jev"]["target"] is None for column in board["columns"]))
 

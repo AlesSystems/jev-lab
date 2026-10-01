@@ -171,19 +171,19 @@ def shown_lane(raw: str, flag: str, quiet: bool) -> str:
 def inbox(quiet: bool, api_key: str | None = None, transport: Transport | None = None,
           events: Sequence[Event] = EVENTS, custom: bool = False) -> dict[str, Any]:
     key = api_key.strip() if isinstance(api_key, str) else ""
+    inspection = None
     scored: dict[str, str] = {}
     error: str | None = None
     eligible = [event for event in events if event.flag != "page"]
     if key and not quiet and eligible:
-        parsed, error = post_jev(
-            {
-                "model": MODEL,
-                "state": {"preference": PREFERENCE, "events": [{"id": event.id, "text": event.text} for event in eligible]},
-                "questions": score_questions(eligible),
-            },
-            key,
-            transport,
-        )
+        request = {
+            "model": MODEL,
+            "state": {"preference": PREFERENCE, "events": [{"id": event.id, "text": event.text} for event in eligible]},
+            "questions": score_questions(eligible),
+        }
+        parsed, error = post_jev(request, key, transport)
+        if parsed is not None:
+            inspection = {"request": request, "response": parsed, "note": 'Jev returns typed judgments. Any returned reasoning fields are preserved below; when absent, no separate written rationale was supplied. Displayed policy explanations are application rules, not Jev thinking.'}
         if error is None and parsed is not None:
             try:
                 scored = parse_scores(parsed, [event.id for event in eligible])
@@ -249,6 +249,7 @@ def inbox(quiet: bool, api_key: str | None = None, transport: Transport | None =
         else:
             note = "No API key is set. Event type is the baseline, and the scenario lane is a fixture."
     return {
+        "inspection": inspection,
         "quiet": quiet,
         "engine": engine,
         "custom": custom,

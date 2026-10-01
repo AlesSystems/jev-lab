@@ -99,7 +99,7 @@ def parse_response(body, request):
     usage = body.get('usage')
     if usage is not None and (not isinstance(usage, dict) or any(type(usage.get(key)) is not int or usage[key] < 0 for key in ('input_tokens', 'output_tokens'))):
         raise ValueError('Invalid Jev usage.')
-    return {'source': 'Live Jev', 'model': body['model'], 'action': chosen, 'target': round(score) if chosen == 'lights' else None, 'answers': normalized, 'usage': usage, 'inspection': {'request': request, 'response': body}}
+    return {'source': 'Live Jev', 'model': body['model'], 'action': chosen, 'target': round(score) if chosen == 'lights' else None, 'answers': normalized, 'usage': usage, 'inspection': {'request': request, 'response': body, 'note': 'Jev returns typed judgments. Any returned reasoning fields are preserved below; when absent, no separate written rationale was supplied. Displayed policy explanations are application rules, not Jev thinking.'}}
 
 
 def fixture(payload):

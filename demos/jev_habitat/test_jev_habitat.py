@@ -52,6 +52,9 @@ class HabitatTests(unittest.TestCase):
     def test_live_parser_rejects_malformed_answers(self):
         request = make_request(self.payload)
         valid = sample_response(request)
+        valid['reasoning'] = 'Synthetic test rationale'
+        self.assertEqual(parse_response(valid, request)['inspection']['response'], valid)
+        self.assertIn('not Jev thinking', parse_response(valid, request)['inspection']['note'])
         self.assertEqual(parse_response(valid, request)['answers']['brightness']['score'], 1)
         mutations = [
             lambda b: b['answers']['action']['probabilities'].update({'lights': float('nan')}),

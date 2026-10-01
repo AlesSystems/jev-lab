@@ -9,6 +9,9 @@ const snapshot = () => ({ text: $('request-text').value, room: selected, devices
 function invalidate(message = 'Request or room changed. Evaluate again.') {
   revision++;
   proposal = null;
+  $('raw-request').textContent = '';
+  $('raw-response').textContent = '';
+  $('inspection-note').textContent = '';
   $('result').hidden = true;
   $('empty-result').hidden = false;
   $('empty-result').textContent = message;
@@ -64,6 +67,7 @@ function showResult(result, elapsed) {
   $('score-detail').textContent = result.action === 'lights' ? `Brightness, not certainty. Confidence ${fmt(result.answers.brightness.confidence)}.` : `Speculative brightness answer, unused by this ${result.action} decision.`;
   $('noul').textContent = fmt(result.answers.applicable.noul);
   $('noul-detail').textContent = 'Probability that one actionable change applies to this room.';
+  $('inspection-note').textContent = result.inspection.note || 'Illustrative fixture answers. No Jev API call occurred; threshold explanations are application rules.';
   $('raw-request').textContent = JSON.stringify(result.inspection.request, null, 2);
   $('raw-response').textContent = JSON.stringify(result.inspection.response, null, 2);
   $('telemetry').textContent = `· ${Math.round(elapsed)} ms locally${result.usage ? ` · ${result.usage.input_tokens} input / ${result.usage.output_tokens} output tokens` : ''}`;
