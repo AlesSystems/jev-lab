@@ -190,7 +190,8 @@ class CliTests(unittest.TestCase):
     def test_live_without_key_is_explicitly_unattempted(self):
         result = subprocess.run(
             [sys.executable, str(SCRIPT), "report", "Export is broken.", "--live"],
-            capture_output=True, text=True, check=False, env={"PATH": os.environ.get("PATH", "")},
+            capture_output=True, text=True, check=False,
+            env={"PATH": os.environ.get("PATH", ""), "TYPESAFE_API_KEY": ""},
         )
         payload = json.loads(result.stdout)
         self.assertEqual(payload["status"], "unavailable")

@@ -296,7 +296,7 @@ class CliTests(unittest.TestCase):
                 ],
                 capture_output=True,
                 text=True,
-                env={key: value for key, value in os.environ.items() if key != "TYPESAFE_API_KEY"},
+                env={**os.environ, "TYPESAFE_API_KEY": ""},
                 check=True,
             )
             output = json.loads(result.stdout)

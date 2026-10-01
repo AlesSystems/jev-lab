@@ -8,6 +8,7 @@ import json
 import math
 import os
 import re
+import runpy
 import statistics
 import sys
 import tempfile
@@ -539,4 +540,5 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    runpy.run_path(str(Path(__file__).resolve().parents[1] / "env.py"), run_name="__main__")
     raise SystemExit(main())

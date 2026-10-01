@@ -2,7 +2,9 @@
 
 These local pages use Python's standard library and a browser. Use Python 3.10 or newer and run commands from the repository root. No package install or build step is needed. Each server binds to `127.0.0.1`; stop it with Ctrl-C.
 
-Start a page with its command below, then open the listed address. To use live Jev, set `TYPESAFE_API_KEY` in the same server environment before starting the command. For example, in zsh:
+Start a page with its command below, then open the listed address. To use live Jev, copy `.env.example` to `.env` in the repository root and fill in `TYPESAFE_API_KEY=your_key_here` once. The demos load it automatically at startup; restart the server after changing it. `.env` is ignored by Git.
+
+Alternatively, set `TYPESAFE_API_KEY` in the same server environment before starting the command. An exported variable takes precedence over `.env`, including an empty value to force offline mode. For example, in zsh:
 
 ```sh
 read -rs 'TYPESAFE_API_KEY?TypeSafe API key: '; echo

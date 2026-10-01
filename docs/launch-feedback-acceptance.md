@@ -28,6 +28,7 @@ Screenshots:
 Run the Python suites from the repository root:
 
 ```sh
+python3 -m unittest demos/test_env.py
 python3 - <<'PY'
 import pathlib
 import subprocess

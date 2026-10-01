@@ -13,6 +13,18 @@ This repository documents what Jev is useful for, where its limits appear, and h
 
 ## Demos
 
+To save your TypeSafe API key locally, copy `.env.example` to `.env` in the repository root and fill in `TYPESAFE_API_KEY`:
+
+```sh
+cp .env.example .env
+```
+
+```dotenv
+TYPESAFE_API_KEY=your_key_here
+```
+
+The demos load this file automatically at startup, so their normal run commands need no key prefix. Restart a running server after editing `.env`. An existing shell environment variable takes precedence; exporting an empty `TYPESAFE_API_KEY` keeps a demo offline. Blank or missing keys leave the usual offline behavior in place. The loader supports a single-line key, optional quotes, `export`, and comments; it does not expand variables or execute shell commands. `.env` is ignored by Git and the key stays on the server. The demo dashboard itself does not use an API key.
+
 For start commands and a short walkthrough of every local page, see [Run the UI demos](docs/ui-demos.md). For repeatable checks of every browser and CLI demo, use the [developer testing guide](docs/testing-demos.md).
 
 Start with the [demo idea shortlist](docs/demo-ideas.md): eight small experiments for developer tools, SaaS workflows, and automations. Each includes a concrete input, Jev's decision, a simpler baseline, and a success check.
