@@ -6,6 +6,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 from unittest import mock
 
@@ -39,6 +41,48 @@ class PolicyTests(unittest.TestCase):
 
 
 class BoundaryTests(unittest.TestCase):
+    def test_live_cli_exposes_the_returned_envelope(self):
+        payload = {
+            "model": "jev-1.13.0",
+            "answers": {key: {"type": "noul", "noul": 0.9} for key in repro_coach.QUESTIONS},
+            "rationale": "A returned field",
+        }
+        output = StringIO()
+        with mock.patch.dict(os.environ, {"TYPESAFE_API_KEY": "cli-secret"}), mock.patch("urllib.request.urlopen") as urlopen, redirect_stdout(output):
+            urlopen.return_value.__enter__.return_value.read.return_value = json.dumps(payload).encode()
+            self.assertEqual(repro_coach.main(["report", "Export is broken.", "--live"]), 0)
+        result = json.loads(output.getvalue())
+        self.assertEqual(result["inspection"]["response"], payload)
+        self.assertNotIn("cli-secret", output.getvalue())
+
+    def test_inspection_preserves_response_and_excludes_credentials(self):
+        payload = {
+            "model": "jev-1.13.0",
+            "answers": {key: {"type": "noul", "noul": 0.9} for key in repro_coach.QUESTIONS},
+            "reasoning": {"text": "Returned explanation"},
+            "usage": {"input_tokens": 12},
+        }
+        inspection = repro_coach.inspection_record()
+        self.assertIsNone(inspection["request"])
+        self.assertIsNone(inspection["response"])
+        with mock.patch("urllib.request.urlopen") as urlopen:
+            urlopen.return_value.__enter__.return_value.read.return_value = json.dumps(payload).encode()
+            repro_coach.call_jev("report", "inspection-test-secret", inspection)
+            sent = urlopen.call_args.args[0]
+        self.assertEqual(inspection["request"], json.loads(sent.data))
+        self.assertEqual(inspection["response"], payload)
+        self.assertNotIn("inspection-test-secret", json.dumps(inspection))
+        self.assertNotIn("Authorization", json.dumps(inspection))
+
+    def test_invalid_response_is_visible_but_still_an_error(self):
+        inspection = repro_coach.inspection_record()
+        with mock.patch("urllib.request.urlopen") as urlopen:
+            urlopen.return_value.__enter__.return_value.read.return_value = b'{"answers": {}}'
+            parsed, error, _ = repro_coach.call_jev("report", "secret", inspection)
+            self.assertIsNone(parsed)
+            self.assertEqual(error, "invalid_response")
+        self.assertEqual(inspection["response"], {"answers": {}})
+
     def test_response_parser_requires_every_typed_noul(self):
         payload = {
             "answers": {key: {"type": "noul", "noul": 0.8} for key in repro_coach.QUESTIONS},
@@ -140,6 +184,8 @@ class CliTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertEqual((payload["engine"], payload["provenance"]), ("baseline", "baseline_only"))
         self.assertIn("probabilities", payload)
+        self.assertIsNone(payload["inspection"]["request"])
+        self.assertIsNone(payload["inspection"]["response"])
 
     def test_live_without_key_is_explicitly_unattempted(self):
         result = subprocess.run(

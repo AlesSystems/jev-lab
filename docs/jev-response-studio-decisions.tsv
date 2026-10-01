@@ -1,0 +1,8 @@
+ts	phase	decision	why	evidence	result
+2026-10-01T07:00:35+00:00	frame	Kept original uncommitted API-key work outside this checkout	Avoid mixing unrelated changes	b3cd867e1eef6415821fd1b918e885c64478a475	isolated worktree
+2026-10-01T07:00:35+00:00	design	Reused release and feedback engines with independent results	Avoid duplicating validation and release policy	demos/release_room/release_room.py	111 tests pass
+2026-10-01T07:00:35+00:00	response	Preserved actual returned JSON without inventing thinking	The API specifies typed answers; application rules are separate	docs/testing-demos.md	live and mocked responses verified
+2026-10-01T07:00:35+00:00	verification	Exercised nine pages at both desktop and mobile widths	Screenshots alone do not prove mobile behavior	scripts/check-demo-browsers.cjs; docs/screenshots/jev-response-studio/browser-results.json	PASS
+2026-10-01T07:00:35+00:00	live	Compared both rendered exchanges to authenticated API responses	Prove response fidelity through the browser and server	scripts/check-live-release-room.cjs; docs/screenshots/jev-response-studio/live-results.json	19 feedback and 8 release answers; HOLD
+2026-10-01T07:00:35+00:00	review	Corrected offline walkthrough expectations and mobile checks	Independent reviewers reproduced inaccurate acceptance steps	docs/testing-demos.md; scripts/check-demo-browsers.cjs	addressed
+2026-10-01T07:00:35+00:00	design	Increased small text in Release Room	Detector found unreadable secondary type	demos/release_room/static/app.css	final desktop/mobile checks pass

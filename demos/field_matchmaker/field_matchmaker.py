@@ -258,8 +258,9 @@ def board_payload(scenario_id: str | Scenario, api_key: str | None = None, trans
         for column in columns:
             column["jev"] = None
         return {**page, "engine": "offline_baseline", "note": "No API key is set. Only alias matches are shown; no Jev suggestion was made."}
+    request = {"model": MODEL, "state": {"targets": page["targets"]}, "questions": column_questions(scenario.columns)}
     parsed, error = post_jev(
-        {"model": MODEL, "state": {"targets": page["targets"]}, "questions": column_questions(scenario.columns)},
+        request,
         key,
         transport,
     )
@@ -267,6 +268,7 @@ def board_payload(scenario_id: str | Scenario, api_key: str | None = None, trans
         for column in columns:
             column["jev"] = {"status": "unavailable", "target": None}
         return {**page, "engine": "unavailable", "note": f"Jev did not return a usable reading ({error}). No mapping was filled in from the alias list."}
+    page["inspection"] = {"request": request, "response": parsed, "note": 'Jev returns typed judgments. Any returned reasoning fields are preserved below; when absent, no separate written rationale was supplied. Displayed policy explanations are application rules, not Jev thinking.'}
     try:
         readings = parse_columns(parsed, len(columns))
     except ResponseError:

@@ -784,3 +784,7 @@ select:hover {
     scroll-behavior: auto !important;
   }
 }
+
+.jev-inspection { margin-top: 16px; min-width: 0; }
+.jev-inspection summary { cursor: pointer; padding-block: 12px; }
+.jev-inspection pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; font-size: 12px; }

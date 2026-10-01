@@ -34,6 +34,8 @@ class InboxTests(unittest.TestCase):
         self.assertEqual(sent[0]["state"]["events"][0]["text"], event.text)
         self.assertEqual(placed(page, "custom")["lane"], "attention_now")
         self.assertEqual(page["engine"], "live_jev")
+        self.assertEqual(page["inspection"]["request"], sent[0])
+        self.assertEqual(page["inspection"]["response"], json.loads(score_body({"custom": 1.9})))
 
         sent.clear()
         page = budget.inbox(False, api_key="secret", transport=transport,
@@ -91,6 +93,7 @@ class InboxTests(unittest.TestCase):
             raise AssertionError("Jev was called")
 
         page = budget.inbox(False, api_key=None, transport=transport)
+        self.assertIsNone(page["inspection"])
         self.assertEqual(page["engine"], "offline_baseline")
         self.assertEqual(placed(page, "smoke")["lane"], "digest")
 
@@ -112,6 +115,8 @@ class InboxTests(unittest.TestCase):
         self.assertNotIn("edge", request["questions"])
         self.assertNotIn("secret", json.dumps(request))
         self.assertEqual(page["engine"], "live_jev")
+        self.assertEqual(page["inspection"]["request"], request)
+        self.assertEqual(page["inspection"]["response"], json.loads(transport(json.dumps(request).encode(), "secret")))
         self.assertEqual(placed(page, "smoke")["lane"], "digest")
         self.assertEqual(placed(page, "smoke")["source"], "live_jev")
         edge = placed(page, "edge")
@@ -124,6 +129,7 @@ class InboxTests(unittest.TestCase):
             raise AssertionError("Jev was called")
 
         page = budget.inbox(True, api_key="secret", transport=transport)
+        self.assertIsNone(page["inspection"])
         self.assertEqual(page["engine"], "code_rule")
         self.assertEqual(placed(page, "handoff")["lane"], "digest")
         self.assertEqual(placed(page, "edge")["lane"], "attention_now")
@@ -132,6 +138,7 @@ class InboxTests(unittest.TestCase):
         page = budget.inbox(False, api_key="secret", transport=lambda _body, _key: b"{}")
         self.assertEqual(page["engine"], "unavailable")
         self.assertEqual(page["decision"], "UNAVAILABLE")
+        self.assertEqual(page["inspection"]["response"], {})
         smoke = placed(page, "smoke")
         self.assertEqual(smoke["lane"], "review")
         self.assertEqual(smoke["source"], "unavailable")

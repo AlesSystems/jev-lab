@@ -167,7 +167,7 @@ def parse_response(body, request):
             impacts[qid[7:]] = {'score': score, 'confidence': probability(answer.get('confidence')), 'probabilities': probs}
         else:
             supports[qid[8:]] = probability(answer.get('noul'))
-    return {'source': 'Live Jev', 'model': body['model'], 'choices': choices, 'impacts': impacts, 'supports': supports, 'inspection': {'request': request, 'response': body}}
+    return {'source': 'Live Jev', 'model': body['model'], 'choices': choices, 'impacts': impacts, 'supports': supports, 'inspection': {'request': request, 'response': body, 'note': 'Jev returns typed judgments. Any returned reasoning fields are preserved below; when absent, no separate written rationale was supplied. Displayed policy explanations are application rules, not Jev thinking.'}}
 
 
 def baseline(product, comments):

@@ -12,6 +12,7 @@ function markStale() {
   $('assess').innerHTML = 'Ask Jev to reassess <span aria-hidden="true">→</span>';
   if (state.assessment) $('feedback').textContent = 'Evidence changed. Reassess to update the judgment.';
   state.assessment = null;
+  $('assessment').replaceChildren();
   $('assessment').hidden = true;
   $('readiness').className = 'readiness';
   $('readiness').innerHTML = '<span class="status-mark"></span><strong>Awaiting reassessment</strong><p>Ask Jev to judge the current evidence.</p>';
@@ -84,7 +85,7 @@ function renderAssessment(result) {
   const scores = Object.entries(result.answers).filter(([id]) => id.startsWith('score_'));
   $('assessment').hidden = false;
   $('assessment').classList.remove('stale');
-  $('assessment').innerHTML = `<div class="assessment-head"><h3>Assessment</h3><span class="tag source">${result.mode === 'live' ? 'Live Jev' : 'Offline fixture'}</span></div><p class="claim">“${escapeHTML(release().claim)}”</p><div class="judgment"><span>Claim support</span><strong>${Math.round(result.support * 100)}%</strong></div><div class="judgment"><span>Useful next check</span><strong>${escapeHTML(checkLabels[result.next_check] || 'Targeted reproduction')}</strong></div>${scores.map(([id, answer]) => `<div class="judgment"><span>${escapeHTML(release().evidence.find((item) => item.id === id.slice(6))?.title || id)}</span><strong>${Number(answer.score).toFixed(1)} / 3 concern</strong></div>`).join('')}<details><summary>Inspect exact evidence and Jev answers</summary><div class="inspect-label">Input sent to ${result.mode === 'live' ? 'Jev' : 'fixture evaluator'}</div><pre>${escapeHTML(JSON.stringify(result.input, null, 2))}</pre><div class="inspect-label">Typed answers · ${escapeHTML(result.model)}</div><pre>${escapeHTML(JSON.stringify(result.answers, null, 2))}</pre></details>`;
+  $('assessment').innerHTML = `<div class="assessment-head"><h3>Assessment</h3><span class="tag source">${result.mode === 'live' ? 'Live Jev' : 'Offline fixture'}</span></div><p class="claim">“${escapeHTML(release().claim)}”</p><div class="judgment"><span>Claim support</span><strong>${Math.round(result.support * 100)}%</strong></div><div class="judgment"><span>Useful next check</span><strong>${escapeHTML(checkLabels[result.next_check] || 'Targeted reproduction')}</strong></div>${scores.map(([id, answer]) => `<div class="judgment"><span>${escapeHTML(release().evidence.find((item) => item.id === id.slice(6))?.title || id)}</span><strong>${Number(answer.score).toFixed(1)} / 3 concern</strong></div>`).join('')}<details><summary>Inspect exact evidence and Jev answers</summary><div class="inspect-label">Input sent to ${result.mode === 'live' ? 'Jev' : 'fixture evaluator'}</div><pre>${escapeHTML(JSON.stringify(result.input, null, 2))}</pre><div class="inspect-label">${result.inspection ? "Exact Jev response" : "Hand-authored fixture answers"} · ${escapeHTML(result.model)}</div><p>${escapeHTML(result.inspection?.note || "No Jev API call occurred. These are illustrative fixture answers; readiness explanations are application rules.")}</p><pre>${escapeHTML(JSON.stringify(result.inspection?.response || result.answers, null, 2))}</pre></details>`;
   $('feedback').textContent = result.mode === 'live' ? 'Live Jev assessment complete.' : 'Offline fixture assessment complete.';
 }
 async function assess() {

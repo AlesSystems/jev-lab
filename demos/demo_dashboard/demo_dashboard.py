@@ -38,7 +38,7 @@ FIELD_CRITERIA = {
 
 
 def catalog() -> list[dict[str, Any]]:
-    return [
+    demos = [
         {
             "id": "field_matchmaker",
             "name": "Field match",
@@ -1127,6 +1127,24 @@ def catalog() -> list[dict[str, Any]]:
             ],
         },
     ]
+
+    launch = next(demo for demo in demos if demo["id"] == "launch_lab")
+    demos.append({
+        "id": "release_room",
+        "name": "Release Room",
+        "surface": "Command center",
+        "command": "python3 demos/release_room/release_room.py serve",
+        "open": "http://127.0.0.1:8770",
+        "port_note": "Start this server before opening the command center.",
+        "purpose": "Triage customer feedback and assess release evidence in one workbench. Compare prepared examples with live Jev and inspect each exchange.",
+        "asked": "Feedback uses Choice matches, Score impact, and Noul support. Release evidence uses Score concern, Choice next check, and Noul claim support.",
+        "keeps": "Feedback and release assessments stay separate. Failed, missing, or flaky required checks block release readiness. Edits clear the affected assessment.",
+        "trace_caption": "Release-stage request example below. Feedback has an independent request and response. Open Release Room to run both and inspect actual exchanges.",
+        "request": launch["request"],
+        "response": launch["response"],
+        "helpers": launch["helpers"],
+    })
+    return demos
 
 
 def resolve_static(name: str) -> Path | None:

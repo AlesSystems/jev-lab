@@ -1,0 +1,77 @@
+{
+  "source": "Offline servers, synthetic fixtures, Chromium",
+  "results": [
+    {
+      "demo": "claim_check",
+      "status": "PASS",
+      "viewports": [
+        1440,
+        390
+      ]
+    },
+    {
+      "demo": "field_matchmaker",
+      "status": "PASS",
+      "viewports": [
+        1440,
+        390
+      ]
+    },
+    {
+      "demo": "interruption_budget",
+      "status": "PASS",
+      "viewports": [
+        1440,
+        390
+      ]
+    },
+    {
+      "demo": "festival_control_room",
+      "status": "PASS",
+      "viewports": [
+        1440,
+        390
+      ]
+    },
+    {
+      "demo": "launch_lab",
+      "status": "PASS",
+      "viewports": [
+        1440,
+        390
+      ]
+    },
+    {
+      "demo": "feedback_kitchen",
+      "status": "PASS",
+      "viewports": [
+        1440,
+        390
+      ]
+    },
+    {
+      "demo": "jev_habitat",
+      "status": "PASS",
+      "viewports": [
+        1440,
+        390
+      ]
+    },
+    {
+      "demo": "demo_dashboard",
+      "status": "PASS",
+      "viewports": [
+        1440,
+        390
+      ]
+    },
+    {
+      "demo": "release_room",
+      "status": "PASS",
+      "viewports": [
+        1440,
+        390
+      ]
+    }
+  ]
+}

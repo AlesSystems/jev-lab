@@ -293,7 +293,7 @@ FIXTURE: dict[str, Judgment] = {
         "evidence": 0.96,
     },
 }
-LIVE_CACHE: tuple[str, dict[str, Judgment], float] | None = None
+LIVE_CACHE: tuple[str, dict[str, Judgment], float, dict[str, Any]] | None = None
 CACHE_LOCK = threading.Lock()  # ponytail: one global call lock; split by source if concurrent live throughput matters.
 
 
@@ -441,7 +441,7 @@ def parse_jev(
 
 def live_judgments(
     api_key: str, transport=None
-) -> tuple[str, dict[str, Judgment], float]:
+) -> tuple[str, dict[str, Judgment], float, dict[str, Any]]:
     global LIVE_CACHE
     with CACHE_LOCK:
         if LIVE_CACHE is not None:
@@ -473,7 +473,8 @@ def live_judgments(
                 raw = transport(body, api_key)
             if not isinstance(raw, bytes) or len(raw) > MAX_RESPONSE:
                 raise ResponseError("Jev response is too large.")
-            model, judgments = parse_jev(json.loads(raw))
+            response_body = json.loads(raw)
+            model, judgments = parse_jev(response_body)
         except (
             urllib.error.URLError,
             TimeoutError,
@@ -484,7 +485,7 @@ def live_judgments(
             raise ResponseError(
                 "Live Jev is unavailable or returned an invalid response."
             ) from error
-        LIVE_CACHE = (model, judgments, (time.perf_counter() - started) * 1000)
+        LIVE_CACHE = (model, judgments, (time.perf_counter() - started) * 1000, {"request": json.loads(body), "response": response_body, "note": 'Jev returns typed judgments. Any returned reasoning fields are preserved below; when absent, no separate written rationale was supplied. Displayed policy explanations are application rules, not Jev thinking.'})
         return LIVE_CACHE
 
 
@@ -642,9 +643,9 @@ def make_plan(
         key = api_key.strip() if isinstance(api_key, str) else ""
         if not key:
             return {"error": "Live Jev requires TYPESAFE_API_KEY."}
-        model, judgments, elapsed = live_judgments(key, transport)
+        model, judgments, elapsed, inspection = live_judgments(key, transport)
     else:
-        model, judgments, elapsed = None, FIXTURE, None
+        model, judgments, elapsed, inspection = None, FIXTURE, None, None
     assignments, duration = simulate(parsed_crews, judgments)
     assigned = [a for a in assignments if a["status"] == "assigned"]
     arrival = {r["id"]: r["at"] for r in REPORTS}
@@ -671,6 +672,7 @@ def make_plan(
             else 0,
         },
         "elapsed_ms": round(elapsed, 1) if elapsed is not None else None,
+        "inspection": inspection,
     }
 
 

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Release Room · Jev Lab</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script></head>
+<body>
+<header><div><h1>Release Room<span>.</span></h1><p>A working proof for what to improve, and what is ready to ship.</p></div><a href="http://127.0.0.1:8769">Jev Lab dashboard</a></header>
+<div class="edition"><span>Release &amp; feedback command center</span><span>Synthetic cases · local workspace</span></div>
+<main>
+<p class="context">Two independent sample desks. Customer feedback helps you choose improvements; release evidence determines readiness. These fictional products and releases are unrelated. A popular request never clears a failed check.</p>
+<p id="startup" role="status">Opening the workbench…</p>
+<div class="workbench" id="workbench" hidden>
+<section class="desk feedback" aria-labelledby="feedback-heading">
+<div class="section-head"><h2 id="feedback-heading">The listening desk</h2><span>Feedback → shortlist</span></div>
+<div class="controls"><label>Sample product<select id="product"></select></label><label>Assessment<select id="feedback-mode"><option value="baseline">Illustrative fixture</option><option value="live">Live Jev</option></select></label></div>
+<p id="product-description"></p><p class="key-note"></p>
+<details class="comments" open><summary>Edit the customer notes <span id="comment-count"></span></summary><div id="comments"></div><button type="button" id="add-comment" class="secondary">Add a note</button></details>
+<div class="actions"><button id="assess-feedback">Assess feedback</button><button id="reset-feedback" class="secondary">Reset notes</button></div>
+<p id="feedback-status" class="status" role="status" aria-live="polite">Assess the original notes to see the illustrative fixture.</p>
+<h3>Improvement shortlist</h3><p class="hint">Choose up to three improvements. Claim support considers every note, not just matching comments.</p><div id="suggestions"></div>
+<details class="exchange"><summary>Inspect feedback exchange</summary><p>Exact returned fields appear below for live calls, including any reasoning the API supplies. No hidden thinking is inferred. Fixtures are hand-authored examples.</p><pre id="feedback-trace">No assessment yet.</pre></details>
+</section>
+<section class="desk release" aria-labelledby="release-heading">
+<div class="section-head"><h2 id="release-heading">The release proof</h2><span>Evidence → decision</span></div>
+<div class="controls"><label>Sample release<select id="release"></select></label><label>Assessment<select id="release-mode"><option value="fixture">Illustrative fixture</option><option value="live">Live Jev</option></select></label></div>
+<p id="release-description"></p><p class="key-note"></p>
+<div class="proof-layout"><div><h3>Evidence ledger</h3><p class="hint">Select the findings to send. Required checks stay in force even when unchecked.</p><div id="evidence"></div></div>
+<aside class="verdict" aria-label="Release decision"><span>Release decision</span><strong id="decision">UNREAD</strong><p id="decision-copy">Assess the evidence to produce a release proof.</p><dl><dt>Claim support</dt><dd id="support">—</dd><dt>Next check</dt><dd id="next-check">—</dd></dl><h3>Required checks</h3><ul id="checklist"></ul></aside></div>
+<div class="actions"><button id="assess-release">Assess release</button><button id="reset-release" class="secondary">Reset evidence</button></div>
+<p id="release-status" class="status" role="status" aria-live="polite">No release assessment yet.</p>
+<details class="rules"><summary>How the decision is made</summary><p>HOLD if any fixed required check is failed, missing, or flaky. Otherwise READY requires claim support of at least 80%; lower support means REVIEW. These are illustrative rules, not a deployment policy. The feedback shortlist cannot override them.</p></details>
+<details class="exchange"><summary>Inspect release exchange</summary><p>The live request and full returned response are preserved, including any reasoning fields the API supplies. Jev may return typed answers without prose reasoning. Fixtures are not Jev calls.</p><pre id="release-trace">No assessment yet.</pre></details>
+</section>
+</div>
+<section class="handoff"><h2>Working handoff</h2><p id="handoff">Choose improvements and assess a release to assemble your local summary.</p><p class="hint">This workspace does not deploy, submit feedback, or save after a reload.</p></section>
+</main><footer><span>Jev Lab / Release Room</span><span>Read the evidence. Keep the decision accountable.</span></footer>
+</body></html>

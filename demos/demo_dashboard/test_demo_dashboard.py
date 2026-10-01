@@ -20,6 +20,7 @@ EXPECTED_IDS = (
     "jev_habitat",
     "repro_coach",
     "promise_catcher",
+    "release_room",
 )
 
 
@@ -43,6 +44,13 @@ class DemoDashboardTests(unittest.TestCase):
         demos = Path(__file__).parents[1]
         for demo_id in ids:
             self.assertTrue((demos / demo_id).is_dir(), demo_id)
+
+    def test_release_room_links_to_the_combined_workbench(self):
+        demo = next(item for item in demo_dashboard.catalog() if item["id"] == "release_room")
+        self.assertEqual(demo["open"], "http://127.0.0.1:8770")
+        self.assertEqual(demo["command"], "python3 demos/release_room/release_room.py serve")
+        self.assertIn("independent", demo["trace_caption"])
+        self.assertIn("required", demo["keeps"])
 
     def test_field_match_trace_uses_the_real_targets_and_a_blank_choice(self):
         demo = next(item for item in demo_dashboard.catalog() if item["id"] == "field_matchmaker")

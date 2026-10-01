@@ -1,3 +1,19 @@
+
+function appendInspection(container, inspection) {
+  const details = document.createElement("details");
+  details.className = "jev-inspection";
+  const summary = document.createElement("summary");
+  summary.textContent = "Inspect Jev request and response";
+  const note = document.createElement("p");
+  note.textContent = inspection?.note || "No Jev response is available for this result. Baselines, fixtures and code rules are not Jev thinking.";
+  details.append(summary, note);
+  if (inspection) {
+    const pre = document.createElement("pre");
+    pre.textContent = JSON.stringify({ request: inspection.request, response: inspection.response }, null, 2);
+    details.append(pre);
+  }
+  container.append(details);
+}
 const decision = document.querySelector("#decision");
 const why = document.querySelector("#why");
 const scenarios = document.querySelector("#scenarios");
@@ -166,6 +182,7 @@ document.querySelector("#csv-form").addEventListener("submit", async (event) => 
     suggest.disabled = false;
     engine.textContent = `${board.engine === "live_jev" ? "Live Jev" : board.engine === "offline_baseline" ? "Offline baseline" : "Jev unavailable"}. ${board.note}`;
     renderBoard();
+    appendInspection(sheet, board.inspection);
     await refresh();
   } catch (error) {
     if (current !== version) return;

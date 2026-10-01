@@ -271,3 +271,7 @@ textarea { width: 100%; padding: 12px; border: 1px solid var(--grid); border-rad
 #run { margin-top: 16px; }
 .copy { overflow-wrap: anywhere; }
 .sheet:empty { display: none; }
+
+.jev-inspection { margin-top: 24px; padding: 16px; border-top: 1px solid currentColor; min-width: 0; }
+.jev-inspection summary { cursor: pointer; padding-block: 8px; }
+.jev-inspection pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 420px; overflow: auto; font-size: 13px; }

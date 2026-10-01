@@ -278,6 +278,7 @@ def assess(payload, api_key=None, transport=None):
         'status': status, 'support': support, 'next_check': answers['next_check']['choice'],
         'blocked_by': [item['id'] for item in blocked],
         'answers': answers, 'input': body,
+        'inspection': {'request': body, 'response': raw, 'note': 'Jev returns typed judgments. Any returned reasoning fields are preserved below; when absent, no separate written rationale was supplied. Displayed policy explanations are application rules, not Jev thinking.'} if mode == 'live' else None,
     }
 
 

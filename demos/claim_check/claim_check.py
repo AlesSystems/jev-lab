@@ -177,13 +177,15 @@ def check_payload(claim: str, evidence: str, api_key: str | None = None, transpo
             "split": reading["verdict"] != scenario["verdict"] if scenario else False,
             "note": "No API key is set. Keyword overlap is the baseline, and the scenario verdict is a fixture." if scenario else "No API key is set. Only keyword overlap is shown; this is not a Jev verdict.",
         }
+    request = {"model": MODEL, "state": {"claim": claim, "evidence": evidence}, "questions": verdict_question()}
     parsed, error = post_jev(
-        {"model": MODEL, "state": {"claim": claim, "evidence": evidence}, "questions": verdict_question()},
+        request,
         key,
         transport,
     )
     if error is not None or parsed is None:
         return {**page, "engine": "unavailable", "jev": None, "decision": "UNAVAILABLE", "split": False, "note": f"Jev did not return a usable reading ({error}). The baseline is still shown."}
+    page["inspection"] = {"request": request, "response": parsed, "note": 'Jev returns typed judgments. Any returned reasoning fields are preserved below; when absent, no separate written rationale was supplied. Displayed policy explanations are application rules, not Jev thinking.'}
     try:
         choice, confidence, model = parse_verdict(parsed)
     except ResponseError:

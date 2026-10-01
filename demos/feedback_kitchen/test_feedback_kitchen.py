@@ -35,10 +35,12 @@ class FeedbackKitchenTest(unittest.TestCase):
                 answers[qid] = {'type': 'score', 'score': 2, 'confidence': .9, 'probabilities': {'0': 0, '1': 0, '2': 1, '3': 0}}
             else:
                 answers[qid] = {'type': 'noul', 'noul': .2}
-        body = {'model': 'jev-test', 'answers': answers}
+        body = {'model': 'jev-test', 'answers': answers, 'reasoning': 'Synthetic test rationale'}
         result = fk.assess({'product': 'recipe', 'comments': self.comments, 'mode': 'live'}, 'test-key', lambda request_bytes, key: json.dumps(body).encode())
         self.assertEqual(result['choices']['c1']['suggestion'], 'offline')
         self.assertEqual(result['supports']['offline'], .2)
+        self.assertEqual(result['inspection']['response'], body)
+        self.assertIn('not Jev thinking', result['inspection']['note'])
         self.assertEqual(result['inspection']['request']['state']['comments'], self.comments)
         body['answers']['choice_c1']['choice'] = []
         with self.assertRaisesRegex(RuntimeError, 'failed'):

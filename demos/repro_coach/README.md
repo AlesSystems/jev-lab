@@ -35,3 +35,17 @@ uvx ruff check demos/repro_coach
 ```
 
 No live run has been made because this implementation session had no API key. The policy tests verify local routing and boundary handling only.
+
+## Inspect Jev output
+
+Each single-input result and fixture evidence row includes `inspection`. A live
+attempt records the submitted JSON body in `inspection.request` and the decoded
+JSON envelope in `inspection.response`, including any returned rationale fields.
+Request headers and the API key are excluded. Offline and unattempted runs have
+`request: null` and `response: null`; transport failures without a decoded response
+also have `response: null`. Invalid decoded envelopes remain visible and still
+produce an error. Oversized and non-JSON bodies are not retained.
+
+Jev returns typed judgments, not written thinking. The demo does not manufacture
+an explanation when the response contains none. Inspection includes input text;
+review evidence files before sharing them.

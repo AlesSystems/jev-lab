@@ -164,7 +164,15 @@ def parse_jev_response(raw: object) -> JevAnswers:
     )
 
 
-def call_jev(item: PromiseInput, api_key: str) -> JevAnswers:
+def inspection_record() -> dict[str, object]:
+    return {
+        "request": None,
+        "response": None,
+        "note": "Jev returns typed judgments, not written thinking. Any returned rationale is preserved in response; none is generated locally.",
+    }
+
+
+def call_jev(item: PromiseInput, api_key: str, inspection: dict[str, object] | None = None) -> JevAnswers:
     body = json.dumps(
         {
             "model": MODEL,
@@ -172,6 +180,8 @@ def call_jev(item: PromiseInput, api_key: str) -> JevAnswers:
             "questions": QUESTIONS,
         }
     ).encode()
+    if inspection is not None:
+        inspection["request"] = json.loads(body)
     request = urllib.request.Request(
         ENDPOINT,
         data=body,
@@ -189,6 +199,8 @@ def call_jev(item: PromiseInput, api_key: str) -> JevAnswers:
         raw = json.loads(payload)
     except (UnicodeDecodeError, json.JSONDecodeError):
         raise ResponseError("response is not valid JSON") from None
+    if inspection is not None:
+        inspection["response"] = raw
     return parse_jev_response(raw)
 
 
@@ -323,6 +335,7 @@ def evaluate(fixtures: Path, evidence: Path, live: bool, split: str) -> dict[str
             cast(str, fixture["author"]),
             cast(str, fixture["sentence"]),
         )
+        inspection = inspection_record()
         started = time.monotonic()
         decision: Decision | None = None
         returned_model: str | None = None
@@ -330,7 +343,7 @@ def evaluate(fixtures: Path, evidence: Path, live: bool, split: str) -> dict[str
         error: str | None = None
         if live:
             try:
-                answers = call_jev(item, api_key or "")
+                answers = call_jev(item, api_key or "", inspection)
                 decision = decide(answers.commitment, answers.completed)
                 returned_model, usage = answers.returned_model, answers.usage
             except ResponseError as exc:
@@ -342,6 +355,7 @@ def evaluate(fixtures: Path, evidence: Path, live: bool, split: str) -> dict[str
             {
                 "run_at_utc": datetime.now(UTC).isoformat(),
                 "fixture_id": item.source_id,
+                "inspection": inspection,
                 "fixture_sha256": fixture_hash,
                 "split": fixture["split"],
                 "disputed": fixture["disputed"],
@@ -452,9 +466,11 @@ def evaluate(fixtures: Path, evidence: Path, live: bool, split: str) -> dict[str
 
 def _catch(args: argparse.Namespace) -> int:
     item = validate_input(args.source_id, args.author, args.sentence)
+    inspection = inspection_record()
     baseline_action = baseline(item.sentence)
     output: dict[str, object] = {
         "source_id": item.source_id,
+        "inspection": inspection,
         "baseline_action": baseline_action,
         "jev_status": "not_run",
         "jev_action": "not_run",
@@ -467,7 +483,7 @@ def _catch(args: argparse.Namespace) -> int:
             output.update(jev_status="unavailable", jev_action="unavailable", error="missing_api_key")
         else:
             try:
-                answers = call_jev(item, api_key)
+                answers = call_jev(item, api_key, inspection)
                 decision = decide(answers.commitment, answers.completed)
                 output.update(
                     jev_status="live_jev",

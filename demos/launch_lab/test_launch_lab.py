@@ -66,13 +66,17 @@ class AssessmentTests(unittest.TestCase):
     def test_live_retains_typed_answers_and_rejects_malformed(self):
         selected = ['mi_browser', 'mi_lag']
         fixture = lab.assess({'release': 'midnight', 'selected': selected, 'mode': 'fixture'})
+        self.assertIsNone(fixture['inspection'])
+        raw_response = {'model': 'jev-latest', 'answers': fixture['answers'], 'reasoning': 'Synthetic test rationale', 'usage': {'input_tokens': 42}}
         def transport(body, key):
             self.assertEqual(key, 'secret')
             self.assertEqual(json.loads(body)['state']['evidence'][0]['id'], 'mi_browser')
-            return json.dumps({'model': 'jev-latest', 'answers': fixture['answers']}).encode()
+            return json.dumps(raw_response).encode()
         result = lab.assess({'release': 'midnight', 'selected': selected, 'mode': 'live'}, 'secret', transport)
         self.assertEqual(result['mode'], 'live')
         self.assertEqual(result['answers'], fixture['answers'])
+        self.assertEqual(result['inspection']['request'], result['input'])
+        self.assertEqual(result['inspection']['response'], raw_response)
         with self.assertRaises(lab.AssessmentError):
             lab.assess({'release': 'midnight', 'selected': selected, 'mode': 'live'}, 'secret', lambda *_: b'{bad')
 
