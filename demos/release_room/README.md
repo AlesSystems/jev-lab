@@ -10,7 +10,7 @@ The server imports the existing Feedback Kitchen and Launch Lab engines and cata
 python3 demos/release_room/release_room.py serve --port 8770
 ```
 
-Open <http://127.0.0.1:8770>. Fixtures need no API key. To use live assessments, set `TYPESAFE_API_KEY` in the server environment and restart. Credentials remain on the loopback server. Live failures stay errors and never become fixture successes. Each desk has its own mode, result, pending state, and exchange inspection.
+Open <http://127.0.0.1:8770>. Fixtures need no API key. The server automatically loads `TYPESAFE_API_KEY` from the repository root `.env` file. To use live assessments, set the key there or in the server environment and restart the server. Both desks default to fixtures; select **Live Jev** separately for each desk, then click its **Assess** button. Credentials remain on the loopback server. Live failures stay errors and never become fixture successes. Each desk has its own mode, result, pending state, and exchange inspection.
 
 ## Test the workbench
 
