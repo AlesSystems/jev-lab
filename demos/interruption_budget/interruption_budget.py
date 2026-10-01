@@ -7,6 +7,7 @@ import argparse
 import json
 import math
 import os
+import runpy
 import urllib.error
 import urllib.request
 from collections.abc import Callable, Sequence
@@ -348,4 +349,5 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    runpy.run_path(str(Path(__file__).resolve().parents[1] / "env.py"), run_name="__main__")
     raise SystemExit(main())

@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import runpy
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -81,4 +82,5 @@ def main():
 
 
 if __name__ == '__main__':
+    runpy.run_path(str(Path(__file__).resolve().parents[1] / 'env.py'), run_name='__main__')
     main()

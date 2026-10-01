@@ -4,6 +4,7 @@ import argparse
 import json
 import math
 import os
+import runpy
 import threading
 import time
 import urllib.error
@@ -783,4 +784,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    runpy.run_path(str(Path(__file__).resolve().parents[1] / "env.py"), run_name="__main__")
     main()

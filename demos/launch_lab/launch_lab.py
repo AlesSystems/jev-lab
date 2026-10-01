@@ -4,6 +4,7 @@ import argparse
 import json
 import math
 import os
+import runpy
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -356,4 +357,5 @@ def main():
 
 
 if __name__ == '__main__':
+    runpy.run_path(str(Path(__file__).resolve().parents[1] / 'env.py'), run_name='__main__')
     main()
