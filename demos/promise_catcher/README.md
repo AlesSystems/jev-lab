@@ -38,3 +38,17 @@ The fixtures contain 10 development cases and 20 held-out cases. The held-out se
 The preview store supports one writer at a time. It uses atomic file replacement and persistent source-ID deduplication. A repeated ID with changed text or author becomes a conflict. Use file locking or SQLite only if concurrent writers become necessary.
 
 The demo does not calculate relative dates, confirm ownership, schedule work, or connect to a calendar or task tracker.
+
+## Inspect Jev output
+
+Each single-input result and fixture evidence row includes `inspection`. A live
+attempt records the submitted JSON body in `inspection.request` and the decoded
+JSON envelope in `inspection.response`, including any returned rationale fields.
+Request headers and the API key are excluded. Offline and unattempted runs have
+`request: null` and `response: null`; transport failures without a decoded response
+also have `response: null`. Invalid decoded envelopes remain visible and still
+produce an error. Oversized and non-JSON bodies are not retained.
+
+Jev returns typed judgments, not written thinking. The demo does not manufacture
+an explanation when the response contains none. Inspection includes input text;
+review evidence files before sharing them.

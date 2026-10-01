@@ -154,8 +154,18 @@ def _input_tokens(usage: object) -> int | None:
     return value
 
 
-def call_jev(report: str, api_key: str) -> tuple[ParsedResponse | None, str | None, int]:
+def inspection_record() -> dict[str, object]:
+    return {
+        "request": None,
+        "response": None,
+        "note": "Jev returns typed judgments, not written thinking. Any returned rationale is preserved in response; none is generated locally.",
+    }
+
+
+def call_jev(report: str, api_key: str, inspection: dict[str, object] | None = None) -> tuple[ParsedResponse | None, str | None, int]:
     body = json.dumps({"model": MODEL, "state": {"report": report}, "questions": question_payload()}).encode()
+    if inspection is not None:
+        inspection["request"] = json.loads(body)
     request = urllib.request.Request(ENDPOINT, body, {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"})
     started = time.monotonic()
     try:
@@ -163,7 +173,10 @@ def call_jev(report: str, api_key: str) -> tuple[ParsedResponse | None, str | No
             raw = response.read(MAX_RESPONSE_BYTES + 1)
         if len(raw) > MAX_RESPONSE_BYTES:
             return None, "response_too_large", round((time.monotonic() - started) * 1000)
-        parsed = parse_response(json.loads(raw))
+        payload = json.loads(raw)
+        if inspection is not None:
+            inspection["response"] = payload
+        parsed = parse_response(payload)
         return parsed, None, round((time.monotonic() - started) * 1000)
     except urllib.error.HTTPError as error:
         return None, f"http_{error.code}", round((time.monotonic() - started) * 1000)
@@ -249,6 +262,7 @@ def _decision_json(decision: Decision) -> dict[str, object]:
 
 
 def run_fixture(fixture: Mapping[str, Any], live: bool, api_key: str | None) -> dict[str, Any]:
+    inspection = inspection_record()
     baseline_decision = baseline(fixture["report"])
     parsed: ParsedResponse | None = None
     error: str | None = None
@@ -261,7 +275,7 @@ def run_fixture(fixture: Mapping[str, Any], live: bool, api_key: str | None) -> 
             error = "missing_api_key"
             provenance = "unattempted"
         else:
-            parsed, error, elapsed_ms = call_jev(fixture["report"], api_key)
+            parsed, error, elapsed_ms = call_jev(fixture["report"], api_key, inspection)
             provenance = "live_jev"
         jev_decision = decide(parsed.values) if parsed else Decision("unavailable", error=error)
     else:
@@ -274,6 +288,7 @@ def run_fixture(fixture: Mapping[str, Any], live: bool, api_key: str | None) -> 
         "split": fixture["split"],
         "disputed": fixture["disputed"],
         "source_report": fixture["report"],
+        "inspection": inspection,
         "expected_checklist": expected_checklist(fixture),
         "baseline": _decision_json(baseline_decision),
         "jev": _decision_json(jev_decision),
@@ -336,14 +351,15 @@ def fixtures_command(args: argparse.Namespace) -> int:
 
 
 def report_command(args: argparse.Namespace) -> int:
+    inspection = inspection_record()
     report = args.report
     validate_report(report)
     if not report.strip():
-        print(json.dumps({**asdict(Decision("request_description")), "engine": "local_validation", "provenance": "local_validation", "probabilities": None}))
+        print(json.dumps({**asdict(Decision("request_description")), "engine": "local_validation", "provenance": "local_validation", "probabilities": None, "inspection": inspection}))
         return 0
     if args.live:
         api_key = os.environ.get("TYPESAFE_API_KEY")
-        parsed, error, _ = call_jev(report, api_key) if api_key else (None, "missing_api_key", 0)
+        parsed, error, _ = call_jev(report, api_key, inspection) if api_key else (None, "missing_api_key", 0)
         result = decide(parsed.values) if parsed else Decision("unavailable", error=error)
         engine = "jev"
         provenance = "live_jev" if api_key else "unattempted"
@@ -351,7 +367,7 @@ def report_command(args: argparse.Namespace) -> int:
     else:
         result = baseline(report)
         engine, provenance, probabilities = "baseline", "baseline_only", None
-    print(json.dumps({**asdict(result), "engine": engine, "provenance": provenance, "probabilities": probabilities}))
+    print(json.dumps({**asdict(result), "engine": engine, "provenance": provenance, "probabilities": probabilities, "inspection": inspection}))
     return 0
 
 

@@ -14,6 +14,47 @@ import promise_catcher
 
 
 class DecisionTests(unittest.TestCase):
+    def test_live_cli_exposes_the_returned_envelope(self):
+        payload = {
+            "model": "jev-1.13.0",
+            "answers": {key: {"type": "noul", "noul": 0.9} for key in promise_catcher.QUESTIONS},
+            "rationale": "A returned field",
+        }
+        output = StringIO()
+        with mock.patch.dict(os.environ, {"TYPESAFE_API_KEY": "cli-secret"}), mock.patch("urllib.request.urlopen") as urlopen, redirect_stdout(output):
+            urlopen.return_value.__enter__.return_value.read.return_value = json.dumps(payload).encode()
+            self.assertEqual(promise_catcher.main(["catch", "--source-id", "id", "--author", "Ada", "--sentence", "I will send it.", "--live"]), 0)
+        result = json.loads(output.getvalue())
+        self.assertEqual(result["inspection"]["response"], payload)
+        self.assertNotIn("cli-secret", output.getvalue())
+
+    def test_inspection_preserves_response_and_excludes_credentials(self):
+        payload = {
+            "model": "jev-1.13.0",
+            "answers": {key: {"type": "noul", "noul": 0.9} for key in promise_catcher.QUESTIONS},
+            "reasoning": {"text": "Returned explanation"},
+            "usage": {"input_tokens": 12},
+        }
+        inspection = promise_catcher.inspection_record()
+        self.assertIsNone(inspection["request"])
+        self.assertIsNone(inspection["response"])
+        with mock.patch("urllib.request.urlopen") as urlopen:
+            urlopen.return_value.__enter__.return_value.read.return_value = json.dumps(payload).encode()
+            promise_catcher.call_jev(promise_catcher.PromiseInput("id", "Ada", "I will send it."), "inspection-test-secret", inspection)
+            sent = urlopen.call_args.args[0]
+        self.assertEqual(inspection["request"], json.loads(sent.data))
+        self.assertEqual(inspection["response"], payload)
+        self.assertNotIn("inspection-test-secret", json.dumps(inspection))
+        self.assertNotIn("Authorization", json.dumps(inspection))
+
+    def test_invalid_response_is_visible_but_still_an_error(self):
+        inspection = promise_catcher.inspection_record()
+        with mock.patch("urllib.request.urlopen") as urlopen:
+            urlopen.return_value.__enter__.return_value.read.return_value = b'{"answers": {}}'
+            with self.assertRaises(promise_catcher.ResponseError):
+                promise_catcher.call_jev(promise_catcher.PromiseInput("id", "Ada", "I will send it."), "secret", inspection)
+        self.assertEqual(inspection["response"], {"answers": {}})
+
     def test_policy_routes_clear_uncertain_and_contradictory_answers(self):
         cases = [
             ((0.8, 0.2), "proposed"),
@@ -211,6 +252,8 @@ class CliTests(unittest.TestCase):
             result = subprocess.run(command, capture_output=True, text=True, check=True)
             output = json.loads(result.stdout)
             self.assertEqual(output["jev_status"], "not_run")
+            self.assertIsNone(output["inspection"]["request"])
+            self.assertIsNone(output["inspection"]["response"])
             self.assertEqual(output["baseline_action"], "proposed")
             self.assertFalse(preview.exists())
 
