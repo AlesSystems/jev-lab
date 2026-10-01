@@ -1,0 +1,21 @@
+{
+  "source": "Synthetic Pantry & Co. feedback and Friday Checkout, authenticated API",
+  "results": [
+    {
+      "stage": "feedback",
+      "source": "Authenticated live Jev",
+      "model": "jev-1.13.0",
+      "answers": 19,
+      "displayedExchangeMatches": true
+    },
+    {
+      "stage": "release",
+      "source": "Authenticated live Jev",
+      "model": "jev-1.13.0",
+      "answers": 8,
+      "displayedExchangeMatches": true
+    }
+  ],
+  "decision": "HOLD",
+  "noPageErrors": true
+}

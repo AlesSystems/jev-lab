@@ -13,7 +13,7 @@ This repository documents what Jev is useful for, where its limits appear, and h
 
 ## Demos
 
-For start commands and a short walkthrough of every local page, see [Run the UI demos](docs/ui-demos.md).
+For start commands and a short walkthrough of every local page, see [Run the UI demos](docs/ui-demos.md). For repeatable checks of every browser and CLI demo, use the [developer testing guide](docs/testing-demos.md).
 
 Start with the [demo idea shortlist](docs/demo-ideas.md): eight small experiments for developer tools, SaaS workflows, and automations. Each includes a concrete input, Jev's decision, a simpler baseline, and a success check.
 
@@ -39,6 +39,8 @@ Both run with Python's standard library and a browser. Offline results are label
 [Jev Habitat](demos/jev_habitat/README.md) is a separate room simulation. Turn a request into typed judgments, inspect the API exchange, adjust a local decision threshold, and apply a change to simulated lights, music, or blinds. Prepared examples work offline. Free text uses live Jev.
 
 The [demo dashboard](demos/demo_dashboard/README.md) lists the local pages and the two command-line demos on one warm desk. Switch a demo, then read the request shape beside a blank response. It does not call Jev.
+
+[Release Room](demos/release_room/README.md) combines feedback triage and release evidence in one command center. Inspect each Jev exchange, shortlist improvements, and see required checks keep release decisions blocked. Launch it from the demo dashboard after starting its local server.
 
 ## Research notes
 

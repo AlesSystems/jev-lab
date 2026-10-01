@@ -20,9 +20,12 @@ The key stays on the local server. Without it, the pages show their stated offli
 | [Launch Lab](../demos/launch_lab/README.md) | `python3 demos/launch_lab/launch_lab.py serve` | http://127.0.0.1:8766 |
 | [Feedback Kitchen](../demos/feedback_kitchen/README.md) | `python3 demos/feedback_kitchen/feedback_kitchen.py serve` | http://127.0.0.1:8767 |
 | [Jev Habitat](../demos/jev_habitat/README.md) | `python3 demos/jev_habitat/jev_habitat.py serve` | http://127.0.0.1:8777 |
+| [Release Room](../demos/release_room/README.md) | `python3 demos/release_room/release_room.py serve` | http://127.0.0.1:8770 |
 | [Demo dashboard](../demos/demo_dashboard/README.md) | `python3 demos/demo_dashboard/demo_dashboard.py serve` | http://127.0.0.1:8769 |
 
-Claim check and Launch Lab share port 8766. Interruption budget and Feedback Kitchen share port 8767. To run either pair together, add `--port 8770` to one start command and open that port in the browser. Every server accepts `--port`.
+Claim check and Launch Lab share port 8766. Interruption budget and Feedback Kitchen share port 8767. To run either pair together, add `--port 8771` to one start command and open that port in the browser. Every server accepts `--port`.
+
+For step-by-step checks of every page and both CLI demos, use the [developer testing guide](testing-demos.md).
 
 ## Field match
 
@@ -54,13 +57,17 @@ Choose a room and a prepared request, then evaluate it. Inspect the answers befo
 
 Change the decision threshold to see the application hold or permit the same answer without calling Jev again. Then apply a change and watch the room respond. Edit the request or reset the room to invalidate the old proposal. The inspector shows the state and questions sent to Jev, the typed answers, and the application rule. Offline results are illustrative fixtures for exact prepared requests. Free text needs **Live Jev** and a server-side key. No physical devices are connected.
 
+## Release Room
+
+Triage customer feedback and inspect release evidence in a single workbench. The two assessments remain independent. Shortlist improvements, change evidence, and inspect each returned Jev exchange. Required checks still block readiness when their evidence cards are unchecked. Prepared examples work offline; edited feedback requires live Jev.
+
 ## Demo dashboard
 
 Open the dashboard to switch every local page and the two command-line demos without starting them. The top rail selects a demo. The sheet under it states what Jev is asked, what code keeps, and how to run that demo. The lower sheet is the request body beside a blank response shape. Select a helper to mark the matching JSON path. Blank fields are not a recorded Jev response. This page never calls the API.
 
 ## What every demo has in common
 
-Your browser sends input to its own local Python server. In live mode, that server sends application state and narrow questions to Jev. Jev returns typed answers rather than a written explanation. The application decides what to do with those answers, including when to ask for review or leave something unchanged. A high confidence value does not prove that the decision is correct.
+Your browser sends input to its own local Python server. In live mode, that server sends application state and narrow questions to Jev. Jev returns typed answers rather than a written explanation. The inspectors retain the full returned JSON, including extra rationale fields if the service supplies them. Offline baselines have no live response; fixture answers are labeled. Application explanations describe local rules, not hidden Jev thinking. The application decides what to do with those answers, including when to ask for review or leave something unchanged. A high confidence value does not prove that the decision is correct.
 
 For the current contract, see the [TypeSafe API reference](https://docs.typesafe.ai/api) and [function-calling example](https://docs.typesafe.ai/cookbooks/function_calling).
 
